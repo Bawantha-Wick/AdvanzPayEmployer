@@ -186,7 +186,7 @@ export default function Users() {
               fontWeight: 400
             }}
           >
-            Showing 1 of 78
+            Showing {page * rowsPerPage + 1}-{Math.min((page + 1) * rowsPerPage, rows.length)} of {rows.length}
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Button

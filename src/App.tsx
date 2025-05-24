@@ -7,12 +7,11 @@ import ResetPassword from './components/users/ResetPassword';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Users from './components/users/Users';
-import UserRoles from './components/backup/UserRoles';
+import UserRoles from './components/UserRoles';
 import Employees from './components/backup/Employees';
 import EmployeeRequests from './components/backup/EmployeeRequests';
 import AuthorizeEmployees from './components/backup/AuthorizeEmployees';
 import Settlements from './components/backup/Settlements';
-
 
 function App() {
   return (
