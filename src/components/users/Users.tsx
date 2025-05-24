@@ -7,9 +7,13 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import { FaRegEdit } from 'react-icons/fa';
 
 interface Column {
-  id: 'name' | 'code' | 'email' | 'userRole' | 'isApproved';
+  id: 'name' | 'code' | 'email' | 'userRole' | 'isApproved' | 'action';
   label: string;
   minWidth?: number;
   align?: 'center';
@@ -20,7 +24,8 @@ const columns: readonly Column[] = [
   { id: 'name', label: 'NAME', minWidth: 170 },
   { id: 'email', label: 'EMAIL', minWidth: 170 },
   { id: 'userRole', label: 'USER ROLE', minWidth: 170 },
-  { id: 'isApproved', label: 'APPROVE STATUS', minWidth: 170 }
+  { id: 'isApproved', label: 'APPROVE STATUS', minWidth: 170 },
+  { id: 'action', label: 'ACTION', minWidth: 170 }
 ];
 
 interface Data {
@@ -36,21 +41,21 @@ function createData(code: string, name: string, email: string, userRole: string,
 }
 
 const rows = [
-  createData('001', 'India', 'IN', 'User', true),
-  createData('001', 'China', 'CN', 'User', true),
-  createData('001', 'Italy', 'IT', 'User', true),
-  createData('001', 'United States', 'US', 'User', true),
-  createData('001', 'Canada', 'CA', 'User', true),
-  createData('001', 'Australia', 'AU', 'User', true),
-  createData('001', 'Germany', 'DE', 'User', true),
-  createData('001', 'Ireland', 'IE', 'User', true),
-  createData('001', 'Mexico', 'MX', 'User', true),
-  createData('001', 'Japan', 'JP', 'User', true),
-  createData('001', 'France', 'FR', 'User', true),
-  createData('001', 'United Kingdom', 'GB', 'User', true),
-  createData('001', 'Russia', 'RU', 'User', true),
-  createData('001', 'Nigeria', 'NG', 'User', true),
-  createData('001', 'Brazil', 'BR', 'User', true)
+  createData('AU001', 'John Smith', 'john.smith@example.com.au', 'Admin', true),
+  createData('AU002', 'Sarah Johnson', 'sarah.j@company.com.au', 'Admin', true),
+  createData('AU003', 'Michael Wong', 'michael.w@business.net.au', 'Admin', false),
+  createData('AU004', 'Emma Taylor', 'emma.t@example.com.au', 'Admin', true),
+  createData('AU005', 'David Nguyen', 'david.n@company.com.au', 'Admin', true),
+  createData('AU006', 'Olivia Chen', 'olivia.c@business.net.au', 'Admin', false),
+  createData('AU007', 'James Wilson', 'james.w@example.com.au', 'Admin', true),
+  createData('AU008', 'Sophie Brown', 'sophie.b@company.com.au', 'Admin', true),
+  createData('AU009', 'William Lee', 'william.l@business.net.au', 'Admin', false),
+  createData('AU010', 'Charlotte Davis', 'charlotte.d@example.com.au', 'Admin', true),
+  createData('AU011', 'Thomas Martin', 'thomas.m@company.com.au', 'Admin', true),
+  createData('AU012', 'Isabella White', 'isabella.w@business.net.au', 'Admin', true),
+  createData('AU013', 'Benjamin Harris', 'benjamin.h@example.com.au', 'Admin', false),
+  createData('AU014', 'Amelia Clark', 'amelia.c@company.com.au', 'Admin', true),
+  createData('AU015', 'Lucas Turner', 'lucas.t@business.net.au', 'Admin', true)
 ];
 
 export default function StickyHeadTable() {
@@ -83,21 +88,50 @@ export default function StickyHeadTable() {
             {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
               return (
                 <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                  {columns.map((column) => {
-                    const value = row[column.id];
-                    return (
-                      <TableCell key={column.id} align={column.align}>
-                        {column.format && typeof value === 'number' ? column.format(value) : value}
-                      </TableCell>
-                    );
-                  })}
+                  <TableCell key="name">{row.name}</TableCell>
+                  <TableCell key="email">{row.email}</TableCell>
+                  <TableCell key="userRole">{row.userRole}</TableCell>
+                  <TableCell key="isApproved">
+                    <Box
+                      sx={{
+                        backgroundColor: row.isApproved ? '#ccf1ea' : '#fcd6d5',
+                        color: row.isApproved ? '#00b79a' : '#ee3827',
+                        display: 'inline-block',
+                        px: 2,
+                        py: 0.5,
+                        borderRadius: 1
+                      }}
+                    >
+                      <Typography variant="body2">{row.isApproved ? 'Approved' : 'Declined'}</Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell key="action">
+                    <Button
+                      size="medium"
+                      variant="outlined"
+                      startIcon={<FaRegEdit />}
+                      onClick={() => console.log(`Edit user ${row.code}`)}
+                      sx={{
+                        color: '#e07a64',
+                        borderColor: '#e07a64',
+                        borderRadius: '10px',
+                        padding: '6px 16px',
+                        '&:hover': {
+                          borderColor: '#d06954',
+                          backgroundColor: 'rgba(224, 122, 100, 0.04)'
+                        }
+                      }}
+                    >
+                      View & Edit
+                    </Button>
+                  </TableCell>
                 </TableRow>
               );
             })}
           </TableBody>
         </Table>
       </TableContainer>
-      <TablePagination rowsPerPageOptions={[10, 25, 100]} component="div" count={rows.length} rowsPerPage={rowsPerPage} page={page} onPageChange={handleChangePage} onRowsPerPageChange={handleChangeRowsPerPage} />
+      <TablePagination component="div" count={rows.length} rowsPerPage={rowsPerPage} page={page} onPageChange={handleChangePage} onRowsPerPageChange={handleChangeRowsPerPage} rowsPerPageOptions={[]} />
     </Paper>
   );
 }
