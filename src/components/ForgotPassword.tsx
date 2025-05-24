@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import forgotPasswordImage from '@/assets/logo.png'; // Adjust path as needed
+
 const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -20,7 +22,7 @@ const ForgotPassword: React.FC = () => {
       <div className="w-[95vw] h-[90vh] bg-white rounded-lg shadow-md flex flex-col items-center justify-center">
         <div className="text-center w-[600px]">
           <div className="flex justify-center mb-10">
-            <img src="/src/assets/logo.png" alt="advanzpay" className="h-8" />
+            <img src={forgotPasswordImage} alt="advanzpay" className="h-8" />
           </div>
 
           <h2 className="text-[32px] font-medium text-gray-800">Forgot your Password ?</h2>
