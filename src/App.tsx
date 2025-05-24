@@ -1,12 +1,12 @@
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Welcome from './components/Welcome';
-import ForgotPassword from './components/ForgotPassword';
-import EmailVerification from './components/EmailVerification';
-import ResetPassword from './components/ResetPassword';
+import ForgotPassword from './components/users/ForgotPassword';
+import EmailVerification from './components/users/EmailVerification';
+import ResetPassword from './components/users/ResetPassword';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
-import Users from './components/backup/Users';
+import Users from './components/users/Users';
 import UserRoles from './components/backup/UserRoles';
 import Employees from './components/backup/Employees';
 import EmployeeRequests from './components/backup/EmployeeRequests';
