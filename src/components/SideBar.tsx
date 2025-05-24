@@ -55,7 +55,7 @@ const SideBar: React.FC = () => {
       <nav className="flex-1" style={{ marginTop: '4rem', marginLeft: '3rem' }}>
         {/* Dashboard */}
         <div style={menuItemStyles}>
-          <Link to="/dashboard" className="flex text-white hover:bg-[#DC7356] transition-colors">
+          <Link to="/app/dashboard" className="flex text-white hover:bg-[#DC7356] transition-colors">
             <IoHomeOutline className="text-xl" style={iconStyles} />
             <span>Dashboard</span>
           </Link>
@@ -72,11 +72,11 @@ const SideBar: React.FC = () => {
           </button>
           {expandedMenus.includes('userManagement') && (
             <div className="flex flex-col bg-[#DC7356]" style={subMenuStyles}>
-              <Link to="/users" className="flex block py-2">
+              <Link to="/app/users" className="flex block py-2">
                 <IoAddOutline className="text-xl" style={subMenuIconStyles} />
                 <span style={subMenuItemStyles}>Users</span>
               </Link>
-              <Link to="/user-roles" className="flex block py-2">
+              <Link to="/app/user-roles" className="flex block py-2">
                 <RiFileListLine className="text-xl" style={subMenuIconStyles} />
                 <span style={subMenuItemStyles}>User Roles</span>
               </Link>
@@ -95,15 +95,15 @@ const SideBar: React.FC = () => {
           </button>
           {expandedMenus.includes('employeeManagement') && (
             <div className="bg-[#DC7356]" style={subMenuStyles}>
-              <Link to="/employees" className="flex block py-2">
+              <Link to="/app/employees" className="flex block py-2">
                 <FaRegUser className="text-l" style={subMenuIconStyles} />
                 <span style={subMenuItemStyles}>Employees</span>
               </Link>
-              <Link to="/employee-requests" className="flex block py-2">
+              <Link to="/app/employee-requests" className="flex block py-2">
                 <LuUserRoundPlus className="text-xl" style={subMenuIconStyles} />
                 <span style={subMenuItemStyles}>Employee Requests</span>
               </Link>
-              <Link to="/authorize-employees" className="flex block py-2">
+              <Link to="/app/authorize-employees" className="flex block py-2">
                 <LuUserRoundCheck className="text-xl" style={subMenuIconStyles} />
                 <span style={subMenuItemStyles}>Authorize Employees</span>
               </Link>
@@ -113,7 +113,7 @@ const SideBar: React.FC = () => {
 
         {/* Settlements */}
         <div style={menuItemStyles}>
-          <Link to="/settlements" className="flex text-white hover:bg-[#DC7356] transition-colors">
+          <Link to="/app/settlements" className="flex text-white hover:bg-[#DC7356] transition-colors">
             <BsFileEarmarkText className="text-xl" style={iconStyles} />
             <span>Settlements</span>
           </Link>
@@ -132,7 +132,7 @@ const SideBar: React.FC = () => {
       </nav>
 
       {/* User Profile */}
-      <div className="h-20 border-t border-[#DC7356] bg-[#e08368]" style={{ marginBottom: '2rem', marginLeft: '2rem', marginRight: '2rem' }}>
+      <div className="mt-auto h-20 border-t border-[#DC7356] bg-[#e08368]" style={{ marginBottom: '2rem', marginLeft: '2rem', marginRight: '2rem' }}>
         <button onClick={() => toggleMenu('profile')} className="w-full flex justify-center hover:bg-[#DC7356] transition-colors gap-5" style={{ marginTop: '1.25rem' }}>
           <img src={profileImg} alt="Profile" className="w-10 h-10 rounded" />
           <div className="text-center">
