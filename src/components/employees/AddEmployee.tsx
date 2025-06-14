@@ -186,7 +186,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
             <Box>
               <Grid container spacing={2}>
                 {/* First row */}
-                <Grid item /*xs={12} md={6}*/ size={6}>
+                <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
                     Employee ID
                   </Typography>
@@ -212,7 +212,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     }}
                   />
                 </Grid>
-                <Grid item /*xs={12} md={6}*/ size={6}>
+                <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
                     Name
                   </Typography>
@@ -240,7 +240,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                 </Grid>
 
                 {/* Second row */}
-                <Grid item /*xs={12} md={6}*/ size={6}>
+                <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
                     Email
                   </Typography>
@@ -267,7 +267,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     }}
                   />
                 </Grid>
-                <Grid item /*xs={12} md={6}*/ size={6}>
+                <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
                     Mobile number
                   </Typography>
@@ -295,7 +295,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                 </Grid>
 
                 {/* Third row */}
-                <Grid item /*xs={12} md={6}*/ size={6}>
+                <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
                     Basic salary (USD)
                   </Typography>
@@ -323,7 +323,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                 </Grid>
 
                 {mode === 'edit' && (
-                  <Grid item /*xs={12} md={6}*/ size={6}>
+                  <Grid /*xs={12} md={6}*/ size={6}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, mb: 2 }}>
                       <Typography variant="subtitle1" fontWeight="medium" mr={1}>
                         Account status :
@@ -387,7 +387,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
               </Typography>
 
               <Grid container spacing={3}>
-                <Grid item /*xs={12} md={6}*/ size={6}>
+                <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
                     Account name
                   </Typography>
@@ -413,7 +413,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     }}
                   />
                 </Grid>
-                <Grid item /*xs={12} md={6}*/ size={6}>
+                <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
                     Account number
                   </Typography>
@@ -439,7 +439,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     }}
                   />
                 </Grid>
-                <Grid item /*xs={12} md={6}*/ size={6}>
+                <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
                     Bank name
                   </Typography>
@@ -465,7 +465,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     }}
                   />
                 </Grid>
-                <Grid item /*xs={12} md={6}*/ size={6}>
+                <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
                     Branch
                   </Typography>
