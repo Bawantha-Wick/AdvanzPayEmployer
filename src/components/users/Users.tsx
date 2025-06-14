@@ -135,7 +135,9 @@ export default function Users() {
                           display: 'inline-block',
                           px: 2,
                           py: 0.5,
-                          borderRadius: 1
+                          borderRadius: 1,
+                          width: '120px',
+                          textAlign: 'center'
                         }}
                       >
                         <Typography variant="body2">{row.isApproved ? 'Active' : 'Inactive'}</Typography>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import SideBar from './SideBar';
-import TopBar from './TopBar';
+import SideBar from './core/SideBar';
+import TopBar from './core/TopBar';
 
 const Layout: React.FC = () => {
   const location = useLocation();

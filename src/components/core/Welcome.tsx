@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import SignIn from './SignIn';
-import SignUp from './SignUp';
-import logo from '../assets/logo.png';
+import SignIn from '../auth/SignIn';
+import SignUp from '../auth/SignUp';
+import logo from '../../assets/logo.png';
 
 type WelcomeProps = {
   initialTab?: 'signin' | 'signup';

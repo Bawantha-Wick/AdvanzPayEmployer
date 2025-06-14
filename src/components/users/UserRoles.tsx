@@ -13,8 +13,8 @@ import { FaRegEdit } from 'react-icons/fa';
 import { InputAdornment, TextField } from '@mui/material';
 import { IoMdSearch } from 'react-icons/io';
 import { IoAddCircleOutline } from 'react-icons/io5';
-import AddUserRoleModal from './AddUserRoleModal';
-import type { RoleData } from './AddUserRoleModal';
+import AddUserRoleModal from './AddUserRole';
+import type { RoleData } from './AddUserRole';
 
 interface Column {
   id: 'name' | 'description' | 'roleStatus' | 'action';

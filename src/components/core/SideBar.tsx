@@ -6,8 +6,8 @@ import { BsFileEarmarkText } from 'react-icons/bs';
 import { IoHomeOutline, IoAddOutline } from 'react-icons/io5';
 import { RiFileListLine } from 'react-icons/ri';
 import { HiOutlineUserGroup } from 'react-icons/hi2';
-import innerLogo from '../assets/inner_logo.png';
-import profileImg from '../assets/profile.png';
+import innerLogo from '../../assets/inner_logo.png';
+import profileImg from '../../assets/profile.png';
 import { LuUserRoundPlus, LuUserRoundCheck } from 'react-icons/lu';
 
 const SideBar: React.FC = () => {
