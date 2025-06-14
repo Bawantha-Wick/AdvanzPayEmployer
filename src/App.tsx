@@ -9,9 +9,9 @@ import Dashboard from './components/dashboard/Dashboard';
 import Users from './components/user/Users';
 import UserRoles from './components/user/UserRoles';
 import Employees from './components/employee/Employees';
-import EmployeeRequests from './components/backup/EmployeeRequests';
+import EmployeeRequests from './components/employee/EmployeeRequests';
 import AuthorizeEmployees from './components/backup/AuthorizeEmployees';
-import Settlements from './components/backup/Settlements';
+import Settlements from './components/settlement/Settlements';
 
 function App() {
   return (
