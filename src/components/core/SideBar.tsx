@@ -121,6 +121,12 @@ const SideBar: React.FC = () => {
 
         {/* Reports */}
         <div style={menuItemStyles}>
+          <Link to="/app/reports" className="flex text-white hover:bg-[#DC7356] transition-colors">
+            <BsFileEarmarkText className="text-xl" style={iconStyles} />
+            <span>Reports</span>
+          </Link>
+        </div>
+        {/* <div style={menuItemStyles}>
           <button onClick={() => toggleMenu('reports')} className="w-full flex items-center justify-between text-white hover:bg-[#DC7356] transition-colors">
             <div className="flex items-center">
               <BsFileEarmarkText className="text-xl" style={iconStyles} />
@@ -128,7 +134,7 @@ const SideBar: React.FC = () => {
             </div>
             {expandedMenus.includes('reports') ? <MdKeyboardArrowDown className="text-xl" style={expandIconStyles} /> : <MdKeyboardArrowRight className="text-xl" style={expandIconStyles} />}
           </button>
-        </div>
+        </div> */}
       </nav>
 
       {/* User Profile */}
