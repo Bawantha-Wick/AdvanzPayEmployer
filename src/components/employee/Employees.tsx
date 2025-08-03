@@ -1,4 +1,5 @@
 import * as React from 'react';
+import constant from '../../constant';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -15,9 +16,13 @@ import { IoMdSearch } from 'react-icons/io';
 import { IoAddCircleOutline } from 'react-icons/io5';
 import { MdFileUpload } from 'react-icons/md';
 import AddEmployee, { type EmployeeFormData } from './AddEmployee';
+import { employeeService } from '../../services/employeeService';
+import type { CorpEmployee } from '../../types/api';
+import { LoadingSpinner } from '../common/LoadingSpinner';
+import { ErrorDisplay } from '../common/ErrorDisplay';
 
 interface Column {
-  id: 'id' | 'name' | 'mobile' | 'email' | 'salary' | 'accountStatus' | 'approveStatus' | 'action';
+  id: 'no' | 'name' | 'mobile' | 'email' | 'salary' | 'accountStatus' | 'approveStatus' | 'action';
   label: string;
   minWidth?: number;
   align?: 'center';
@@ -25,7 +30,7 @@ interface Column {
 }
 
 const columns: readonly Column[] = [
-  { id: 'id', label: 'EMPLOYEE ID', minWidth: 100 },
+  { id: 'no', label: 'EMPLOYEE ID', minWidth: 100 },
   { id: 'name', label: 'EMPLOYEE NAME', minWidth: 170 },
   { id: 'mobile', label: 'MOBILE NO', minWidth: 130 },
   { id: 'email', label: 'EMAIL', minWidth: 170 },
@@ -35,49 +40,69 @@ const columns: readonly Column[] = [
   { id: 'action', label: 'ACTION', minWidth: 130 }
 ];
 
-interface EmployeeData {
-  id: string;
-  name: string;
-  mobile: string;
-  email: string;
-  salary: string;
-  accountStatus: boolean;
-  approveStatus: boolean;
-}
-
-function createData(id: string, name: string, mobile: string, email: string, salary: string, accountStatus: boolean, approveStatus: boolean): EmployeeData {
-  return { id, name, mobile, email, salary, accountStatus, approveStatus };
-}
-
-const rows = [
-  createData('1234', 'Christine Brooks', '077750165', 'abc@gmail.com', '400 USD', true, true),
-  createData('1234', 'Christine Brooks', '077750165', 'abc@gmail.com', '400 USD', false, false),
-  createData('1234', 'Christine Brooks', '077750165', 'abc@gmail.com', '400 USD', true, true),
-  createData('1234', 'Christine Brooks', '077750165', 'abc@gmail.com', '400 USD', true, true),
-  createData('1234', 'Christine Brooks', '077750165', 'abc@gmail.com', '400 USD', true, true),
-  createData('1234', 'Christine Brooks', '077750165', 'abc@gmail.com', '400 USD', true, true),
-  createData('1234', 'James Wilson', '077750165', 'james@gmail.com', '400 USD', true, true),
-  createData('1234', 'Sophie Brown', '077750165', 'sophie@gmail.com', '400 USD', true, true),
-  createData('1234', 'William Lee', '077750165', 'william@gmail.com', '400 USD', false, false),
-  createData('1234', 'Charlotte Davis', '077750165', 'charlotte@gmail.com', '400 USD', true, true),
-  createData('1234', 'Thomas Martin', '077750165', 'thomas@gmail.com', '400 USD', true, true),
-  createData('1234', 'Isabella White', '077750165', 'isabella@gmail.com', '400 USD', true, true),
-  createData('1234', 'Benjamin Harris', '077750165', 'benjamin@gmail.com', '400 USD', false, false),
-  createData('1234', 'Amelia Clark', '077750165', 'amelia@gmail.com', '400 USD', true, true),
-  createData('1234', 'Lucas Turner', '077750165', 'lucas@gmail.com', '400 USD', true, true)
-];
-
 export default function Employees() {
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage] = React.useState(9);
+  const [currentPage, setCurrentPage] = React.useState(1);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = React.useState('');
   const [openEmployeeModal, setOpenEmployeeModal] = React.useState(false);
   const [modalMode, setModalMode] = React.useState<'add' | 'edit'>('add');
   const [selectedEmployee, setSelectedEmployee] = React.useState<EmployeeFormData | undefined>(undefined);
-  const [employeesList, setEmployeesList] = React.useState<EmployeeData[]>(rows);
 
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
+  // API state
+  const [employees, setEmployees] = React.useState<CorpEmployee[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [pagination, setPagination] = React.useState({ total: 0, pages: 0 });
+
+  // Debounce search term
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch employees when page or search term changes
+  React.useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await employeeService.getCorpEmployees(currentPage, debouncedSearchTerm);
+        setEmployees(response.data.employees);
+        setPagination(response.data.pagination);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch employees');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEmployees();
+  }, [currentPage, debouncedSearchTerm]);
+
+  const retryFetchEmployees = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await employeeService.getCorpEmployees(currentPage, debouncedSearchTerm);
+      setEmployees(response.data.employees);
+      setPagination(response.data.pagination);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch employees');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePage = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
   const handleOpenAddEmployeeModal = () => {
@@ -86,22 +111,23 @@ export default function Employees() {
     setOpenEmployeeModal(true);
   };
 
-  const handleOpenEditEmployeeModal = (employee: EmployeeData) => {
+  const handleOpenEditEmployeeModal = (employee: CorpEmployee) => {
     setModalMode('edit');
-    // Convert EmployeeData to EmployeeFormData
+    // Convert CorpEmployee to EmployeeFormData
     const employeeFormData: EmployeeFormData = {
-      id: employee.id,
+      id: employee.no.toString(),
       name: employee.name,
       email: employee.email,
       mobile: employee.mobile,
-      salary: employee.salary,
-      accountStatus: employee.accountStatus,
-      approveStatus: employee.approveStatus,
+      salary: employee.basicSalAmt,
+      accountStatus: employee.status === constant.status.active,
+      approveStatus: employee.status === constant.status.active,
+      status: (employee.status as 'ACTV' | 'INAC' | 'BLCK') || 'ACTV',
       bankDetails: {
-        accountName: employee.name, // Assuming same name for demo purposes
-        accountNumber: '52896866',
-        bankName: 'Westpac',
-        branch: 'Sydney'
+        accountName: employee.accName,
+        accountNumber: employee.accNo,
+        bankName: employee.accBank,
+        branch: employee.accBranch
       }
     };
     setSelectedEmployee(employeeFormData);
@@ -112,54 +138,31 @@ export default function Employees() {
     setOpenEmployeeModal(false);
   };
 
-  const handleSaveEmployee = (employeeData: EmployeeFormData) => {
-    if (modalMode === 'add') {
-      // Create new employee object
-      const newEmployee: EmployeeData = {
-        id: employeeData.id,
-        name: employeeData.name,
-        email: employeeData.email,
-        mobile: employeeData.mobile,
-        salary: employeeData.salary,
-        accountStatus: true,
-        approveStatus: true
-      };
-      setEmployeesList([...employeesList, newEmployee]);
-    } else {
-      // Update existing employee
-      setEmployeesList(
-        employeesList.map((emp) =>
-          emp.id === employeeData.id
-            ? {
-                ...emp,
-                name: employeeData.name,
-                email: employeeData.email,
-                mobile: employeeData.mobile,
-                salary: employeeData.salary
-              }
-            : emp
-        )
-      );
-    }
+  const handleSaveEmployee = () => {
+    // For now, just close the modal and refresh the data
+    // In a real application, you would make an API call to save the employee
     handleCloseEmployeeModal();
+    retryFetchEmployees(); // Refresh the employee list
   };
 
-  const handleDeactivateEmployee = (employeeId: string) => {
-    setEmployeesList(employeesList.map((emp) => (emp.id === employeeId ? { ...emp, accountStatus: false } : emp)));
-  };
+  // Show loading spinner
+  if (loading) {
+    return <LoadingSpinner message="Loading employees..." />;
+  }
 
-  const handleBlockEmployee = (employeeId: string) => {
-    setEmployeesList(employeesList.map((emp) => (emp.id === employeeId ? { ...emp, accountStatus: false, approveStatus: false } : emp)));
-  };
+  // Show error message
+  if (error) {
+    return <ErrorDisplay error={error} onRetry={retryFetchEmployees} variant="page" />;
+  }
 
   return (
     <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <TextField
-          placeholder="Search mail"
+          placeholder="Search employees..."
           size="small"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={handleSearchChange}
           sx={{
             width: '250px',
             '& .MuiOutlinedInput-root': {
@@ -223,19 +226,19 @@ export default function Employees() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => {
+              {employees.map((employee) => {
                 return (
-                  <TableRow hover role="checkbox" tabIndex={-1} key={index} sx={{ '& td': { borderColor: '#f0f0f0' } }}>
-                    <TableCell>{row.id}</TableCell>
-                    <TableCell>{row.name}</TableCell>
-                    <TableCell>{row.mobile}</TableCell>
-                    <TableCell>{row.email}</TableCell>
-                    <TableCell>{row.salary}</TableCell>
+                  <TableRow hover role="checkbox" tabIndex={-1} key={employee.no} sx={{ '& td': { borderColor: '#f0f0f0' } }}>
+                    <TableCell>{employee.no}</TableCell>
+                    <TableCell>{employee.name}</TableCell>
+                    <TableCell>{employee.mobile}</TableCell>
+                    <TableCell>{employee.email}</TableCell>
+                    <TableCell>LKR {employee.basicSalAmt}</TableCell>
                     <TableCell>
                       <Box
                         sx={{
-                          backgroundColor: row.accountStatus ? '#ccf1ea' : '#fcd6d5',
-                          color: row.accountStatus ? '#00b79a' : '#ee3827',
+                          backgroundColor: employee.status === 'ACTV' ? '#ccf1ea' : '#fcd6d5',
+                          color: employee.status === 'ACTV' ? '#00b79a' : '#ee3827',
                           display: 'inline-block',
                           px: 2,
                           py: 0.5,
@@ -244,14 +247,14 @@ export default function Employees() {
                           textAlign: 'center'
                         }}
                       >
-                        <Typography variant="body2">{row.accountStatus ? 'Active' : 'Inactive'}</Typography>
+                        <Typography variant="body2">{employee.statusLabel}</Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
                       <Box
                         sx={{
-                          backgroundColor: row.approveStatus ? '#ccf1ea' : '#fcd6d5',
-                          color: row.approveStatus ? '#00b79a' : '#ee3827',
+                          backgroundColor: employee.status === 'ACTV' ? '#ccf1ea' : '#fcd6d5',
+                          color: employee.status === 'ACTV' ? '#00b79a' : '#ee3827',
                           display: 'inline-block',
                           px: 2,
                           py: 0.5,
@@ -260,7 +263,7 @@ export default function Employees() {
                           textAlign: 'center'
                         }}
                       >
-                        <Typography variant="body2">{row.approveStatus ? 'Approved' : 'Rejected'}</Typography>
+                        <Typography variant="body2">{employee.apStatusLabel}</Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
@@ -268,7 +271,7 @@ export default function Employees() {
                         size="medium"
                         variant="outlined"
                         startIcon={<FaRegEdit />}
-                        onClick={() => handleOpenEditEmployeeModal(row)}
+                        onClick={() => handleOpenEditEmployeeModal(employee)}
                         sx={{
                           color: '#e07a64',
                           borderColor: '#e07a64',
@@ -286,6 +289,15 @@ export default function Employees() {
                   </TableRow>
                 );
               })}
+              {employees.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={columns.length} sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {searchTerm ? 'No employees found matching your search.' : 'No employees found.'}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
@@ -308,12 +320,12 @@ export default function Employees() {
               fontWeight: 400
             }}
           >
-            Showing {page * rowsPerPage + 1}-{Math.min((page + 1) * rowsPerPage, rows.length)} of {rows.length}
+            Showing {employees.length > 0 ? (currentPage - 1) * 10 + 1 : 0}-{Math.min(currentPage * 10, pagination.total)} of {pagination.total}
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Button
-              disabled={page === 0}
-              onClick={(e) => handleChangePage(e, page - 1)}
+              disabled={currentPage === 1}
+              onClick={() => handleChangePage(currentPage - 1)}
               sx={{
                 minWidth: '32px',
                 minHeight: '32px',
@@ -332,8 +344,8 @@ export default function Employees() {
               &lt;
             </Button>
             <Button
-              disabled={page >= Math.ceil(rows.length / rowsPerPage) - 1}
-              onClick={(e) => handleChangePage(e, page + 1)}
+              disabled={currentPage >= pagination.pages}
+              onClick={() => handleChangePage(currentPage + 1)}
               sx={{
                 minWidth: '32px',
                 minHeight: '32px',
@@ -356,7 +368,7 @@ export default function Employees() {
       </Paper>
 
       {/* Add/Edit Employee Modal */}
-      <AddEmployee open={openEmployeeModal} onClose={handleCloseEmployeeModal} onSave={handleSaveEmployee} onDeactivate={handleDeactivateEmployee} onBlock={handleBlockEmployee} mode={modalMode} employeeData={selectedEmployee} />
+      <AddEmployee open={openEmployeeModal} onClose={handleCloseEmployeeModal} onSave={handleSaveEmployee} mode={modalMode} employeeData={selectedEmployee} />
     </Box>
   );
 }

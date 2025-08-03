@@ -9,10 +9,13 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import { Grid } from '@mui/material';
 import Collapse from '@mui/material/Collapse';
+import Alert from '@mui/material/Alert';
 import CloseIcon from '@mui/icons-material/Close';
 import HistoryIcon from '@mui/icons-material/History';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TransactionHistory from './TransactionHistory';
+import { employeeService } from '../../services/employeeService';
+import type { CreateCorpEmployeeData, UpdateCorpEmployeeData } from '../../types/api';
 
 export interface EmployeeFormData {
   id: string;
@@ -22,6 +25,7 @@ export interface EmployeeFormData {
   salary: string;
   accountStatus?: boolean;
   approveStatus?: boolean;
+  status?: 'ACTV' | 'INAC' | 'BLCK';
   bankDetails: {
     accountName: string;
     accountNumber: string;
@@ -34,13 +38,11 @@ interface AddEmployeeProps {
   open: boolean;
   onClose: () => void;
   onSave: (employeeData: EmployeeFormData) => void;
-  onDeactivate?: (employeeId: string) => void;
-  onBlock?: (employeeId: string) => void;
   mode?: 'add' | 'edit';
   employeeData?: EmployeeFormData;
 }
 
-const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeactivate, onBlock, mode = 'add', employeeData: initialEmployeeData }) => {
+const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode = 'add', employeeData: initialEmployeeData }) => {
   const [employeeData, setEmployeeData] = React.useState<EmployeeFormData>({
     id: '',
     name: '',
@@ -49,6 +51,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
     salary: '',
     accountStatus: true,
     approveStatus: true,
+    status: 'ACTV',
     bankDetails: {
       accountName: '',
       accountNumber: '',
@@ -59,9 +62,14 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
   const [showHistory, setShowHistory] = React.useState<boolean>(false);
   const [detailsExpanded, setDetailsExpanded] = React.useState<boolean>(true);
   const [historyExpanded, setHistoryExpanded] = React.useState<boolean>(false);
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string>('');
+  const [isFormDisabled, setIsFormDisabled] = React.useState<boolean>(false);
 
   // Initialize form with employee data when in edit mode
   React.useEffect(() => {
+    setError(''); // Clear error when dialog opens
+
     if (mode === 'edit' && initialEmployeeData) {
       setEmployeeData({
         ...initialEmployeeData,
@@ -71,8 +79,12 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
           accountNumber: '',
           bankName: '',
           branch: ''
-        }
+        },
+        // Set default status if not provided
+        status: initialEmployeeData.status || 'ACTV'
       });
+      // Set form disabled state based on status
+      setIsFormDisabled(initialEmployeeData.status === 'INAC');
     } else if (mode === 'add') {
       // Reset form for add mode
       setEmployeeData({
@@ -83,6 +95,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
         salary: '',
         accountStatus: true,
         approveStatus: true,
+        status: 'ACTV',
         bankDetails: {
           accountName: '',
           accountNumber: '',
@@ -90,6 +103,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
           branch: ''
         }
       });
+      setIsFormDisabled(false);
     }
   }, [mode, initialEmployeeData, open]);
 
@@ -98,6 +112,8 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
       ...employeeData,
       [field]: value
     });
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   const handleBankDetailsChange = (field: keyof typeof employeeData.bankDetails, value: string) => {
@@ -108,6 +124,8 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
         [field]: value
       }
     });
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   // Mock transaction history data
@@ -119,23 +137,104 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
     { date: '2023/06/25', referenceNo: '786540', accountNo: '12894', status: 'Active', amount: '850 USD' }
   ];
 
-  const handleSave = () => {
-    onSave(employeeData);
-    onClose();
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      // Basic validation
+      if (!employeeData.name || !employeeData.email || !employeeData.mobile || !employeeData.salary) {
+        setError('Please fill in all required fields');
+        setLoading(false);
+        return;
+      }
+
+      if (!employeeData.bankDetails.accountName || !employeeData.bankDetails.accountNumber || !employeeData.bankDetails.bankName || !employeeData.bankDetails.branch) {
+        setError('Please fill in all bank details');
+        setLoading(false);
+        return;
+      }
+
+      if (mode === 'add') {
+        // Map form data to API format for creation
+        const apiData: CreateCorpEmployeeData = {
+          name: employeeData.name,
+          email: employeeData.email,
+          mobile: employeeData.mobile,
+          basicSalAmt: parseFloat(employeeData.salary) || 0,
+          accNo: employeeData.bankDetails.accountNumber,
+          accName: employeeData.bankDetails.accountName,
+          accBank: employeeData.bankDetails.bankName,
+          accBranch: employeeData.bankDetails.branch
+        };
+
+        await employeeService.createCorpEmployee(apiData);
+      } else {
+        // Map form data to API format for update
+        const updateData: UpdateCorpEmployeeData = {
+          no: parseInt(employeeData.id) || 0,
+          name: employeeData.name,
+          email: employeeData.email,
+          mobile: employeeData.mobile,
+          basicSalAmt: parseFloat(employeeData.salary) || 0,
+          accNo: employeeData.bankDetails.accountNumber,
+          accName: employeeData.bankDetails.accountName,
+          accBank: employeeData.bankDetails.bankName,
+          accBranch: employeeData.bankDetails.branch,
+          status: employeeData.status || 'ACTV'
+        };
+
+        await employeeService.updateCorpEmployee(updateData);
+      }
+
+      onSave(employeeData);
+      onClose();
+    } catch (err: unknown) {
+      console.error(`Error ${mode === 'add' ? 'creating' : 'updating'} employee:`, err);
+      const errorMessage = err instanceof Error ? err.message : `Failed to ${mode === 'add' ? 'create' : 'update'} employee. Please try again.`;
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeactivate = () => {
-    if (onDeactivate && employeeData.id) {
-      onDeactivate(employeeData.id);
-      onClose();
-    }
+    // Set status to inactive and disable form fields
+    setEmployeeData({
+      ...employeeData,
+      status: 'INAC',
+      accountStatus: false
+    });
+    setIsFormDisabled(true);
   };
 
   const handleBlock = () => {
-    if (onBlock && employeeData.id) {
-      onBlock(employeeData.id);
-      onClose();
+    if (employeeData.status === 'BLCK') {
+      // If currently blocked, unblock (set to active)
+      setEmployeeData({
+        ...employeeData,
+        status: 'ACTV',
+        accountStatus: true
+      });
+    } else {
+      // Set status to blocked but keep form fields enabled
+      setEmployeeData({
+        ...employeeData,
+        status: 'BLCK',
+        accountStatus: false
+      });
     }
+    // Don't disable form fields for blocked status
+  };
+
+  const handleReactivate = () => {
+    // Set status back to active and enable form fields
+    setEmployeeData({
+      ...employeeData,
+      status: 'ACTV',
+      accountStatus: true
+    });
+    setIsFormDisabled(false);
   };
 
   const toggleHistory = () => {
@@ -180,6 +279,12 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
         </Box>
       </DialogTitle>
 
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
       <DialogContent sx={{ p: 0, minHeight: '65vh', position: 'relative' }}>
         <Box component="form" noValidate sx={{ mt: 1 }}>
           <Collapse in={detailsExpanded} timeout={300}>
@@ -195,6 +300,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     placeholder="Enter employee id"
                     value={employeeData.id}
                     onChange={(e) => handleChange('id', e.target.value)}
+                    disabled={isFormDisabled}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: '8px',
@@ -221,6 +327,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     placeholder="Enter name"
                     value={employeeData.name}
                     onChange={(e) => handleChange('name', e.target.value)}
+                    disabled={isFormDisabled}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: '8px',
@@ -250,6 +357,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     type="email"
                     value={employeeData.email}
                     onChange={(e) => handleChange('email', e.target.value)}
+                    disabled={isFormDisabled}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: '8px',
@@ -267,6 +375,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     }}
                   />
                 </Grid>
+                {/* Third row */}
                 <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
                     Mobile number
@@ -276,6 +385,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     placeholder="Enter mobile number"
                     value={employeeData.mobile}
                     onChange={(e) => handleChange('mobile', e.target.value)}
+                    disabled={isFormDisabled}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: '8px',
@@ -293,8 +403,6 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     }}
                   />
                 </Grid>
-
-                {/* Third row */}
                 <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
                     Basic salary (USD)
@@ -304,6 +412,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     placeholder="Enter salary"
                     value={employeeData.salary}
                     onChange={(e) => handleChange('salary', e.target.value)}
+                    disabled={isFormDisabled}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: '8px',
@@ -330,8 +439,8 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                       </Typography>
                       <Box
                         sx={{
-                          backgroundColor: '#ccf1ea',
-                          color: '#00b79a',
+                          backgroundColor: employeeData.status === 'ACTV' ? '#ccf1ea' : employeeData.status === 'INAC' ? '#f5f5f5' : '#ffe6e6',
+                          color: employeeData.status === 'ACTV' ? '#00b79a' : employeeData.status === 'INAC' ? '#666' : '#d32f2f',
                           display: 'inline-block',
                           px: 3,
                           py: 0.5,
@@ -340,25 +449,25 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                           textAlign: 'center'
                         }}
                       >
-                        <Typography variant="body2">Active</Typography>
+                        <Typography variant="body2">{employeeData.status === 'ACTV' ? 'Active' : employeeData.status === 'INAC' ? 'Inactive' : 'Blocked'}</Typography>
                       </Box>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
                       <Button
                         variant="outlined"
-                        onClick={handleDeactivate}
+                        onClick={employeeData.status === 'INAC' ? handleReactivate : handleDeactivate}
                         sx={{
                           borderRadius: '8px',
                           height: '2.2rem',
-                          color: '#e07a64',
-                          borderColor: '#e07a64',
+                          color: employeeData.status === 'INAC' ? '#00b79a' : '#e07a64',
+                          borderColor: employeeData.status === 'INAC' ? '#00b79a' : '#e07a64',
                           '&:hover': {
-                            borderColor: '#d06954',
-                            backgroundColor: 'rgba(224, 122, 100, 0.04)'
+                            borderColor: employeeData.status === 'INAC' ? '#009985' : '#d06954',
+                            backgroundColor: employeeData.status === 'INAC' ? 'rgba(0, 183, 154, 0.04)' : 'rgba(224, 122, 100, 0.04)'
                           }
                         }}
                       >
-                        Deactivate employee
+                        {employeeData.status === 'INAC' ? 'Reactivate employee' : 'Deactivate employee'}
                       </Button>
                       <Button
                         variant="outlined"
@@ -366,15 +475,15 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                         sx={{
                           borderRadius: '8px',
                           height: '2.2rem',
-                          color: '#e07a64',
-                          borderColor: '#e07a64',
+                          color: employeeData.status === 'BLCK' ? '#00b79a' : '#e07a64',
+                          borderColor: employeeData.status === 'BLCK' ? '#00b79a' : '#e07a64',
                           '&:hover': {
-                            borderColor: '#d06954',
-                            backgroundColor: 'rgba(224, 122, 100, 0.04)'
+                            borderColor: employeeData.status === 'BLCK' ? '#009985' : '#d06954',
+                            backgroundColor: employeeData.status === 'BLCK' ? 'rgba(0, 183, 154, 0.04)' : 'rgba(224, 122, 100, 0.04)'
                           }
                         }}
                       >
-                        Block employee
+                        {employeeData.status === 'BLCK' ? 'Unblock employee' : 'Block employee'}
                       </Button>
                     </Box>
                   </Grid>
@@ -396,6 +505,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     placeholder="John Doe"
                     value={employeeData.bankDetails.accountName}
                     onChange={(e) => handleBankDetailsChange('accountName', e.target.value)}
+                    disabled={isFormDisabled}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: '8px',
@@ -422,6 +532,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     placeholder="52898656"
                     value={employeeData.bankDetails.accountNumber}
                     onChange={(e) => handleBankDetailsChange('accountNumber', e.target.value)}
+                    disabled={isFormDisabled}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: '8px',
@@ -448,6 +559,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     placeholder="Westpac"
                     value={employeeData.bankDetails.bankName}
                     onChange={(e) => handleBankDetailsChange('bankName', e.target.value)}
+                    disabled={isFormDisabled}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: '8px',
@@ -474,6 +586,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                     placeholder="Sydney"
                     value={employeeData.bankDetails.branch}
                     onChange={(e) => handleBankDetailsChange('branch', e.target.value)}
+                    disabled={isFormDisabled}
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: '8px',
@@ -541,6 +654,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
             <Button
               variant="contained"
               onClick={handleSave}
+              disabled={loading}
               sx={{
                 borderRadius: '8px',
                 height: '3rem',
@@ -549,10 +663,13 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, onDeac
                 py: 1,
                 '&:hover': {
                   backgroundColor: '#d06954'
+                },
+                '&:disabled': {
+                  backgroundColor: '#ccc'
                 }
               }}
             >
-              {mode === 'add' ? 'Save employee' : 'Update employee'}
+              {loading ? 'Saving...' : mode === 'add' ? 'Save employee' : 'Update employee'}
             </Button>
           </Box>
         </Box>

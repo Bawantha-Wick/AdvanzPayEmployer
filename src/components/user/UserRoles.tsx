@@ -1,4 +1,5 @@
 import * as React from 'react';
+import constant from '../../constant';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -9,12 +10,16 @@ import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
 import { FaRegEdit } from 'react-icons/fa';
 import { InputAdornment, TextField } from '@mui/material';
 import { IoMdSearch } from 'react-icons/io';
 import { IoAddCircleOutline } from 'react-icons/io5';
 import AddUserRoleModal from './AddUserRole';
 import type { RoleData } from './AddUserRole';
+import { userService } from '../../services/userService';
+import type { CorpUserRoleItem } from '../../types/api';
 
 interface Column {
   id: 'name' | 'description' | 'roleStatus' | 'action';
@@ -30,41 +35,95 @@ const columns: readonly Column[] = [
   { id: 'action', label: 'ACTION', minWidth: 170 }
 ];
 
-function createData(id: string, name: string, description: string, isActive: boolean): RoleData {
-  return {
-    id,
-    name,
-    description,
-    isActive,
-    accessLevels: {
-      dashboard: true,
-      userManagement: true,
-      corporateManagement: true,
-      report: false
-    }
+// Convert API response to RoleData format
+const convertApiRoleToRoleData = (apiRole: CorpUserRoleItem): RoleData => {
+  // Convert permissions string to access levels
+  const permissions = apiRole.permissions.split(',').map((p) => p.trim());
+  const accessLevels = {
+    dashboard: permissions.includes('1'),
+    userManagement: permissions.includes('2'),
+    corporateManagement: permissions.includes('3'),
+    report: permissions.includes('4')
   };
-}
 
-const rows = [
-  createData('R001', 'Christine Brooks', 'Description goes to here', true),
-  createData('R002', 'Christine Brooks', 'Description goes to here', false),
-  createData('R003', 'Christine Brooks', 'Description goes to here', true),
-  createData('R004', 'Christine Brooks', 'Description goes to here', true),
-  createData('R005', 'Christine Brooks', 'Description goes to here', true),
-  createData('R006', 'Christine Brooks', 'Description goes to here', true)
-];
+  return {
+    id: apiRole.no.toString(),
+    name: apiRole.name,
+    description: apiRole.description,
+    isActive: apiRole.status === constant.status.active,
+    accessLevels
+  };
+};
 
 const UserRoles: React.FC = () => {
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage] = React.useState(6);
+  const [page, setPage] = React.useState(1); // API uses 1-based pagination
   const [searchTerm, setSearchTerm] = React.useState('');
   const [openRoleModal, setOpenRoleModal] = React.useState(false);
   const [modalMode, setModalMode] = React.useState<'add' | 'edit'>('add');
   const [selectedRole, setSelectedRole] = React.useState<RoleData | undefined>(undefined);
-  const [rolesList, setRolesList] = React.useState<RoleData[]>(rows);
+  const [rolesList, setRolesList] = React.useState<RoleData[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [pagination, setPagination] = React.useState({
+    page: 1,
+    total: 0,
+    pages: 1
+  });
+
+  // Debounced search to avoid too many API calls
+  const [searchDebounceTimer, setSearchDebounceTimer] = React.useState<NodeJS.Timeout | null>(null);
+
+  // Fetch roles from API
+  const fetchRoles = React.useCallback(async (pageNum: number, search: string = '') => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await userService.getCorpUserRoles({
+        page: pageNum,
+        search: search.trim() || undefined
+      });
+
+      const convertedRoles = response.roles.map(convertApiRoleToRoleData);
+      setRolesList(convertedRoles);
+      setPagination(response.pagination);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch user roles';
+      const apiError = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(apiError || errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load initial data
+  React.useEffect(() => {
+    fetchRoles(1, '');
+  }, [fetchRoles]);
+
+  // Handle search with debounce
+  React.useEffect(() => {
+    if (searchDebounceTimer) {
+      clearTimeout(searchDebounceTimer);
+    }
+
+    const timer = setTimeout(() => {
+      // Reset to page 1 when searching
+      setPage(1);
+      fetchRoles(1, searchTerm);
+    }, 500);
+
+    setSearchDebounceTimer(timer);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, fetchRoles]);
 
   const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
+    const apiPage = newPage + 1; // Convert to 1-based pagination for API
+    setPage(apiPage);
+    fetchRoles(apiPage, searchTerm);
   };
 
   const handleOpenAddRoleModal = () => {
@@ -83,34 +142,24 @@ const UserRoles: React.FC = () => {
     setOpenRoleModal(false);
   };
 
-  const handleSaveRole = (roleData: RoleData) => {
-    if (modalMode === 'add') {
-      // Generate a new ID for the role
-      const newRole = {
-        ...roleData,
-        id: `R${String(rolesList.length + 1).padStart(3, '0')}`,
-        isActive: true
-      };
-      setRolesList([...rolesList, newRole]);
-    } else {
-      // Update existing role
-      setRolesList(rolesList.map((role) => (role.id === roleData.id ? roleData : role)));
-    }
-
+  const handleSaveRole = async (_roleData: RoleData) => {
+    // The API calls are now handled inside the AddUserRole modal
+    // Just refresh the list after any save operation
+    await fetchRoles(page, searchTerm);
     handleCloseRoleModal();
   };
 
-  const handleDisableRole = (roleId: string) => {
-    setRolesList(rolesList.map((role) => (role.id === roleId ? { ...role, isActive: false } : role)));
+  const handleDisableRole = async (_roleId: string) => {
+    // The API call is now handled inside the AddUserRole modal
+    // Just refresh the list after disable operation
+    await fetchRoles(page, searchTerm);
   };
-
-  const filteredRoles = rolesList.filter((role) => role.name.toLowerCase().includes(searchTerm.toLowerCase()) || role.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <TextField
-          placeholder="Search mail"
+          placeholder="Search roles"
           size="small"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -155,6 +204,12 @@ const UserRoles: React.FC = () => {
         </Button>
       </Box>
 
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
       <Paper sx={{ width: '100%', overflow: 'hidden', boxShadow: 'none', borderRadius: 2 }}>
         <TableContainer>
           <Table stickyHeader aria-label="sticky table">
@@ -168,8 +223,22 @@ const UserRoles: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredRoles.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                return (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : rolesList.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                    <Typography variant="body1" color="textSecondary">
+                      No user roles found
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                rolesList.map((row) => (
                   <TableRow hover role="checkbox" tabIndex={-1} key={row.id} sx={{ '& td': { borderColor: '#f0f0f0' } }}>
                     <TableCell>{row.name}</TableCell>
                     <TableCell>{row.description}</TableCell>
@@ -208,8 +277,8 @@ const UserRoles: React.FC = () => {
                       </Button>
                     </TableCell>
                   </TableRow>
-                );
-              })}
+                ))
+              )}
             </TableBody>
           </Table>
         </TableContainer>
@@ -232,12 +301,12 @@ const UserRoles: React.FC = () => {
               fontWeight: 400
             }}
           >
-            Showing {page * rowsPerPage + 1}-{Math.min((page + 1) * rowsPerPage, filteredRoles.length)} of {filteredRoles.length}
+            Showing page {pagination.page} of {pagination.pages} (Total: {pagination.total} roles)
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Button
-              disabled={page === 0}
-              onClick={(e) => handleChangePage(e, page - 1)}
+              disabled={page === 1}
+              onClick={(e) => handleChangePage(e, page - 2)} // Convert back to 0-based for handler
               sx={{
                 minWidth: '32px',
                 minHeight: '32px',
@@ -256,8 +325,8 @@ const UserRoles: React.FC = () => {
               &lt;
             </Button>
             <Button
-              disabled={page >= Math.ceil(filteredRoles.length / rowsPerPage) - 1}
-              onClick={(e) => handleChangePage(e, page + 1)}
+              disabled={page >= pagination.pages}
+              onClick={(e) => handleChangePage(e, page)} // Convert back to 0-based for handler
               sx={{
                 minWidth: '32px',
                 minHeight: '32px',
