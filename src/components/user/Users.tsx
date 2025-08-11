@@ -10,16 +10,17 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { FaRegEdit } from 'react-icons/fa';
-import { InputAdornment, TextField, CircularProgress, Alert } from '@mui/material';
+import { InputAdornment, TextField, CircularProgress, Alert, Switch } from '@mui/material';
 import { IoMdSearch } from 'react-icons/io';
 import { IoAddCircleOutline } from 'react-icons/io5';
 import { useQueryClient } from '@tanstack/react-query';
 import AddUser from './AddUser';
 import type { UserFormData } from './AddUser';
 import { useCorpUsers } from '../../hooks/useUsers';
+import { userService } from '../../services/userService';
 
 interface Column {
-  id: 'name' | 'email' | 'userRole' | 'isApproved' | 'action';
+  id: 'name' | 'email' | 'userRole' | 'isApproved' | 'action' | 'title' | 'mobile';
   label: string;
   minWidth?: number;
   align?: 'center';
@@ -30,7 +31,9 @@ const columns: readonly Column[] = [
   { id: 'name', label: 'NAME', minWidth: 170 },
   { id: 'email', label: 'EMAIL', minWidth: 170 },
   { id: 'userRole', label: 'USER ROLE', minWidth: 170 },
-  { id: 'isApproved', label: 'APPROVE STATUS', minWidth: 170 },
+  { id: 'title', label: 'TITLE', minWidth: 170 },
+  { id: 'mobile', label: 'MOBILE', minWidth: 170 },
+  { id: 'isApproved', label: 'STATUS', minWidth: 170 },
   { id: 'action', label: 'ACTION', minWidth: 170 }
 ];
 
@@ -42,6 +45,7 @@ export default function Users() {
   const [addUserOpen, setAddUserOpen] = React.useState(false);
   const [editMode, setEditMode] = React.useState<'add' | 'edit'>('add');
   const [selectedUser, setSelectedUser] = React.useState<UserFormData | undefined>(undefined);
+  const [toggleLoading, setToggleLoading] = React.useState<number | null>(null);
 
   // Debounce search term
   React.useEffect(() => {
@@ -105,6 +109,23 @@ export default function Users() {
     queryClient.invalidateQueries({
       queryKey: ['corp-users']
     });
+  };
+
+  const handleToggleUserStatus = async (userNo: number) => {
+    try {
+      setToggleLoading(userNo); // Set loading state for this specific user
+      await userService.toggleCorpUserStatusNew(userNo);
+
+      // Invalidate and refetch the corp-users query to update the table
+      queryClient.invalidateQueries({
+        queryKey: ['corp-users']
+      });
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+      // You might want to show a toast notification here
+    } finally {
+      setToggleLoading(null); // Clear loading state
+    }
   };
 
   // Handle search with debouncing
@@ -191,20 +212,47 @@ export default function Users() {
                     <TableCell key="name">{user.name}</TableCell>
                     <TableCell key="email">{user.email}</TableCell>
                     <TableCell key="userRole">{user.roleLabel}</TableCell>
+                    <TableCell key="title">{user.title}</TableCell>
+                    <TableCell key="mobile">{user.mobile}</TableCell>
                     <TableCell key="isApproved">
                       <Box
                         sx={{
-                          backgroundColor: user.status === 'ACTV' ? '#ccf1ea' : '#fcd6d5',
-                          color: user.status === 'ACTV' ? '#00b79a' : '#ee3827',
-                          display: 'inline-block',
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: 1,
-                          width: '120px',
-                          textAlign: 'center'
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1
                         }}
                       >
-                        <Typography variant="body2">{user.statusLabel}</Typography>
+                        <Switch
+                          checked={user.status === 'ACTV'}
+                          onChange={() => handleToggleUserStatus(user.no)}
+                          size="small"
+                          disabled={toggleLoading === user.no}
+                          sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                              color: '#e07a64',
+                              '&:hover': {
+                                backgroundColor: 'rgba(224, 122, 100, 0.04)'
+                              }
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                              backgroundColor: '#e07a64'
+                            }
+                          }}
+                        />
+                        {/* <Box
+                          sx={{
+                            backgroundColor: user.status === 'ACTV' ? '#ccf1ea' : '#fcd6d5',
+                            color: user.status === 'ACTV' ? '#00b79a' : '#ee3827',
+                            display: 'inline-block',
+                            px: 2,
+                            py: 0.5,
+                            borderRadius: 1,
+                            width: '80px',
+                            textAlign: 'center'
+                          }}
+                        >
+                          <Typography variant="body2">{user.statusLabel}</Typography>
+                        </Box> */}
                       </Box>
                     </TableCell>
                     <TableCell key="action">

@@ -18,7 +18,20 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: authService.login,
     onSuccess: (data) => {
-      queryClient.setQueryData(['currentUser'], data.user);
+      // Convert the login response to a user object
+      const user = {
+        id: data.data.id.toString(),
+        name: data.data.username,
+        email: data.data.email,
+        role: data.data.title,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      };
+      queryClient.setQueryData(['currentUser'], user);
+    },
+    onError: (error) => {
+      console.error('Login error:', error);
+      throw new Error('Invalid email or password');
     }
   });
 };
@@ -87,12 +100,10 @@ export const useUpdateProfile = () => {
 };
 
 export const useRefreshToken = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: authService.refreshToken,
     onSuccess: (data) => {
-      queryClient.setQueryData(['currentUser'], data.user);
+      console.log('Token refreshed successfully:', data);
     }
   });
 };

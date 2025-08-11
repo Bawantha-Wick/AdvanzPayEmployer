@@ -11,7 +11,7 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { FaRegEdit } from 'react-icons/fa';
-import { InputAdornment, TextField } from '@mui/material';
+import { InputAdornment, TextField, Switch } from '@mui/material';
 import { IoMdSearch } from 'react-icons/io';
 import { IoAddCircleOutline } from 'react-icons/io5';
 import { MdFileUpload } from 'react-icons/md';
@@ -36,7 +36,7 @@ const columns: readonly Column[] = [
   { id: 'email', label: 'EMAIL', minWidth: 170 },
   { id: 'salary', label: 'SALARY (LKR)', minWidth: 130 },
   { id: 'accountStatus', label: 'ACCOUNT STATUS', minWidth: 150 },
-  { id: 'approveStatus', label: 'APPROVE STATUS', minWidth: 150 },
+  // { id: 'approveStatus', label: 'APPROVE STATUS', minWidth: 150 },
   { id: 'action', label: 'ACTION', minWidth: 130 }
 ];
 
@@ -47,6 +47,7 @@ export default function Employees() {
   const [openEmployeeModal, setOpenEmployeeModal] = React.useState(false);
   const [modalMode, setModalMode] = React.useState<'add' | 'edit'>('add');
   const [selectedEmployee, setSelectedEmployee] = React.useState<EmployeeFormData | undefined>(undefined);
+  const [toggleLoading, setToggleLoading] = React.useState<number | null>(null);
 
   // API state
   const [employees, setEmployees] = React.useState<CorpEmployee[]>([]);
@@ -145,6 +146,21 @@ export default function Employees() {
     retryFetchEmployees(); // Refresh the employee list
   };
 
+  const handleToggleEmployeeStatus = async (employeeNo: number) => {
+    try {
+      setToggleLoading(employeeNo); // Set loading state for this specific employee
+      await employeeService.toggleCorpEmployeeStatus(employeeNo);
+
+      // Refresh the employee list
+      retryFetchEmployees();
+    } catch (error) {
+      console.error('Error toggling employee status:', error);
+      // You might want to show a toast notification here
+    } finally {
+      setToggleLoading(null); // Clear loading state
+    }
+  };
+
   // Show loading spinner
   if (loading) {
     return <LoadingSpinner message="Loading employees..." />;
@@ -229,7 +245,32 @@ export default function Employees() {
               {employees.map((employee) => {
                 return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={employee.no} sx={{ '& td': { borderColor: '#f0f0f0' } }}>
-                    <TableCell>{employee.no}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2">{employee.no}</Typography>
+                        {employee.isNew === '1' && (
+                          <Box
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              backgroundColor: '#2d9143ff',
+                              color: '#ffffff',
+                              fontSize: '10px',
+                              fontWeight: 600,
+                              px: 1,
+                              py: 0.25,
+                              borderRadius: '4px',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.3px',
+                              border: '1px solid #218354ff',
+                              boxShadow: '0 1px 3px rgba(224, 122, 100, 0.2)'
+                            }}
+                          >
+                            NEW
+                          </Box>
+                        )}
+                      </Box>
+                    </TableCell>
                     <TableCell>{employee.name}</TableCell>
                     <TableCell>{employee.mobile}</TableCell>
                     <TableCell>{employee.email}</TableCell>
@@ -237,20 +278,31 @@ export default function Employees() {
                     <TableCell>
                       <Box
                         sx={{
-                          backgroundColor: employee.status === 'ACTV' ? '#ccf1ea' : '#fcd6d5',
-                          color: employee.status === 'ACTV' ? '#00b79a' : '#ee3827',
-                          display: 'inline-block',
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: 1,
-                          width: '120px',
-                          textAlign: 'center'
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1
                         }}
                       >
-                        <Typography variant="body2">{employee.statusLabel}</Typography>
+                        <Switch
+                          checked={employee.status === 'ACTV'}
+                          onChange={() => handleToggleEmployeeStatus(employee.no)}
+                          size="small"
+                          disabled={toggleLoading === employee.no}
+                          sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                              color: '#e07a64',
+                              '&:hover': {
+                                backgroundColor: 'rgba(224, 122, 100, 0.04)'
+                              }
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                              backgroundColor: '#e07a64'
+                            }
+                          }}
+                        />
                       </Box>
                     </TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <Box
                         sx={{
                           backgroundColor: employee.status === 'ACTV' ? '#ccf1ea' : '#fcd6d5',
@@ -265,7 +317,7 @@ export default function Employees() {
                       >
                         <Typography variant="body2">{employee.apStatusLabel}</Typography>
                       </Box>
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>
                       <Button
                         size="medium"

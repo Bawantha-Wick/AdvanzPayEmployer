@@ -1,13 +1,19 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuthContext } from '../../contexts/useAuthContext';
 
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { register } = useAuthContext();
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const passwordValidation = useMemo(() => {
     const { password, email } = formData;
@@ -53,20 +59,40 @@ const SignUp: React.FC = () => {
     };
   }, [formData]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
 
     if (!passwordValidation.isValid) {
-      alert('Please ensure your password meets all requirements');
+      setError('Please ensure your password meets all requirements');
       return;
     }
 
-    console.log('Form submitted with valid data:', formData);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword
+      });
+
+      // After successful registration, redirect to verification page or app
+      // You might want to redirect to email verification page instead
+      const from = location.state?.from?.pathname || '/app';
+      navigate(from, { replace: true });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSignIn = (e: React.MouseEvent) => {
@@ -77,17 +103,26 @@ const SignUp: React.FC = () => {
   return (
     <div className="auth-form">
       <form onSubmit={handleSubmit}>
+        {error && (
+          <div className="error-message" style={{ color: 'red', marginBottom: '1rem' }}>
+            {error}
+          </div>
+        )}
+        <div className="form-group">
+          <label>Full Name</label>
+          <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Enter Full Name" required disabled={isLoading} />
+        </div>
         <div className="form-group">
           <label>Email</label>
-          <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="Enter Email" required />
+          <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="Enter Email" required disabled={isLoading} />
         </div>
         <div className="form-group">
           <label>Password</label>
-          <input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="Enter Password" required />
+          <input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="Enter Password" required disabled={isLoading} />
         </div>
         <div className="form-group">
           <label>Confirm Password</label>
-          <input type="password" value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} placeholder="Enter Password" required />
+          <input type="password" value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} placeholder="Enter Password" required disabled={isLoading} />
         </div>
         <div className="password-requirements">
           <div className="requirement">
@@ -107,8 +142,8 @@ const SignUp: React.FC = () => {
             Contains a number or symbol
           </div>
         </div>
-        <button type="submit" className="create-account-btn" disabled={!passwordValidation.isValid || formData.password !== formData.confirmPassword || !formData.email}>
-          Create Account
+        <button type="submit" className="create-account-btn" disabled={!passwordValidation.isValid || formData.password !== formData.confirmPassword || !formData.email || !formData.name || isLoading}>
+          {isLoading ? 'Creating Account...' : 'Create Account'}
         </button>
         <div className="signin-footer">
           <span>Already have an Account? </span>

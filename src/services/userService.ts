@@ -154,5 +154,13 @@ export const userService = {
       status: status
     });
     return response.data;
+  },
+
+  // Toggle corporate user status using the new API
+  toggleCorpUserStatusNew: async (id: number): Promise<CorpUserResponse> => {
+    const response = await api.put('/corp-user/toggle-status', {
+      id: id
+    });
+    return response.data;
   }
 };

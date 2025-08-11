@@ -26,6 +26,7 @@ export interface CorpEmployee {
   statusLabel: string;
   apStatus: string;
   apStatusLabel: string;
+  isNew?: string; // New boolean parameter to indicate newly added employees
 }
 
 export interface CorpEmployeesResponse {
@@ -78,20 +79,22 @@ export interface UpdateCorpEmployeeData {
 
 // Employee Request interfaces
 export interface EmployeeRequest {
-  requestId: string;
-  employeeId: string;
-  employeeName: string;
-  requestedDate: string;
-  requestedType: string;
-  amount?: string;
-  processStatus: 'Pending' | 'Approved' | 'Rejected';
+  id: string;
+  title: string;
+  date: string;
+  amount: string;
+  type: 'withdrawal' | 'deposit' | 'advance' | 'salary';
+  status: 'pending' | 'approved' | 'rejected';
+  verified: 'true' | 'false';
+  employeeId?: string;
+  employeeName?: string;
   processedBy?: string;
   processedDate?: string;
   remark?: string;
 }
 
 export interface UpdateRequestStatusData {
-  processStatus: 'Approved' | 'Rejected';
+  processStatus: 'approved' | 'rejected';
   remark?: string;
   processedBy: string;
 }
@@ -243,10 +246,39 @@ export interface RegisterData {
   confirmPassword: string;
 }
 
+export interface LoginUser {
+  id: number;
+  username: string;
+  email: string;
+  title: string;
+  mobile: string;
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface LoginApiResponse {
+  statusCode: number;
+  status: boolean;
+  responseCode: string;
+  message: string;
+  data: LoginUser;
+}
+
 export interface AuthResponse {
   user: User;
   token: string;
   refreshToken?: string;
+}
+
+export interface RefreshTokenResponse {
+  statusCode: number;
+  status: boolean;
+  responseCode: string;
+  message: string;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+  };
 }
 
 // Settlement interfaces

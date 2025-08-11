@@ -1,20 +1,37 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MdKeyboardArrowDown, MdKeyboardArrowRight } from 'react-icons/md';
 import { FaRegUser } from 'react-icons/fa';
 import { BsFileEarmarkText } from 'react-icons/bs';
 import { IoHomeOutline, IoAddOutline } from 'react-icons/io5';
 import { RiFileListLine } from 'react-icons/ri';
 import { HiOutlineUserGroup } from 'react-icons/hi2';
+import { BiLogOut } from 'react-icons/bi';
 import innerLogo from '../../assets/inner_logo.png';
 import profileImg from '../../assets/profile.png';
 import { LuUserRoundPlus, LuUserRoundCheck } from 'react-icons/lu';
+import { useAuthContext } from '../../contexts/useAuthContext';
 
 const SideBar: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, logout } = useAuthContext();
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['userManagement']);
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenus((prev) => (prev.includes(menuId) ? prev.filter((id) => id !== menuId) : [...prev, menuId]));
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/signin', { replace: true });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout by clearing storage and navigating
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      navigate('/signin', { replace: true });
+    }
   };
 
   const menuItemStyles = {
@@ -138,15 +155,23 @@ const SideBar: React.FC = () => {
       </nav>
 
       {/* User Profile */}
-      <div className="mt-auto h-20 border-t border-[#DC7356] bg-[#e08368]" style={{ marginBottom: '2rem', marginLeft: '2rem', marginRight: '2rem' }}>
-        <button onClick={() => toggleMenu('profile')} className="w-full flex justify-center hover:bg-[#DC7356] transition-colors gap-5" style={{ marginTop: '1.25rem' }}>
+      <div className="mt-auto border-t border-[#DC7356] bg-[#e08368]" style={{ marginBottom: '2rem', marginLeft: '2rem', marginRight: '2rem' }}>
+        <button onClick={() => toggleMenu('profile')} className="w-full flex justify-center hover:bg-[#DC7356] transition-colors gap-5" style={{ marginTop: '1.25rem', paddingBottom: '1.25rem' }}>
           <img src={profileImg} alt="Profile" className="w-10 h-10 rounded" />
           <div className="text-center">
-            <div className="font-medium">Jennifer Clomin</div>
-            <div className="text-sm opacity-75">Admin</div>
+            <div className="font-medium">{user?.name || 'User'}</div>
+            <div className="text-sm opacity-75">{user?.role || 'Admin'}</div>
           </div>
           <MdKeyboardArrowDown className="text-xl ml-3" />
         </button>
+        {expandedMenus.includes('profile') && (
+          <div className="bg-[#e08368] border-t border-[#DC7356]">
+            <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-3 hover:bg-[#DC7356] transition-colors text-white">
+              <BiLogOut className="text-xl" />
+              <span>Logout</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

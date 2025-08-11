@@ -9,60 +9,60 @@ import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { InputAdornment, TextField } from '@mui/material';
+import { InputAdornment, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { IoMdSearch } from 'react-icons/io';
+import { employeeService } from '../../services/employeeService';
+import { useAuthContext } from '../../contexts/useAuthContext';
 
 interface Column {
-  id: 'requestId' | 'employeeId' | 'requestedDate' | 'requestedType' | 'processStatus' | 'processedBy' | 'processedDate' | 'remark';
+  id: 'id' | 'title' | 'date' | 'amount' | 'type' | 'status' | 'verified' | 'actions';
   label: string;
   minWidth?: number;
-  align?: 'center';
+  align?: 'center' | 'right';
 }
 
 const columns: readonly Column[] = [
-  { id: 'requestId', label: 'REQUEST ID', minWidth: 120 },
-  { id: 'employeeId', label: 'EMPLOYEE ID', minWidth: 120 },
-  { id: 'requestedDate', label: 'REQUESTED DATE', minWidth: 150 },
-  { id: 'requestedType', label: 'REQUESTED TYPE', minWidth: 150 },
-  { id: 'processStatus', label: 'PROCESS STATUS', minWidth: 150 },
-  { id: 'processedBy', label: 'PROCESSED BY', minWidth: 150 },
-  { id: 'processedDate', label: 'PROCESSED DATE', minWidth: 150 },
-  { id: 'remark', label: 'REMARK', minWidth: 120 }
+  { id: 'id', label: 'REQUEST ID', minWidth: 120 },
+  { id: 'title', label: 'TITLE', minWidth: 150 },
+  { id: 'date', label: 'DATE', minWidth: 120 },
+  { id: 'amount', label: 'AMOUNT', minWidth: 120, align: 'right' },
+  { id: 'type', label: 'TYPE', minWidth: 120 },
+  { id: 'status', label: 'STATUS', minWidth: 120 },
+  { id: 'verified', label: 'VERIFIED', minWidth: 100 },
+  { id: 'actions', label: 'ACTIONS', minWidth: 200 }
 ];
 
 interface RequestData {
-  requestId: string;
-  employeeId: string;
-  requestedDate: string;
-  requestedType: string;
-  processStatus: 'Approved' | 'Rejected' | 'Pending';
-  processedBy: string;
-  processedDate: string;
-  remark: string;
+  id: string;
+  title: string;
+  date: string;
+  amount: string;
+  type: 'withdrawal' | 'deposit' | 'advance' | 'salary';
+  status: 'pending' | 'approved' | 'rejected';
+  verified: 'true' | 'false';
 }
 
-function createData(requestId: string, employeeId: string, requestedDate: string, requestedType: string, processStatus: 'Approved' | 'Rejected' | 'Pending', processedBy: string, processedDate: string, remark: string): RequestData {
+function createData(id: string, title: string, date: string, amount: string, type: 'withdrawal' | 'deposit' | 'advance' | 'salary', status: 'pending' | 'approved' | 'rejected', verified: 'true' | 'false'): RequestData {
   return {
-    requestId,
-    employeeId,
-    requestedDate,
-    requestedType,
-    processStatus,
-    processedBy,
-    processedDate,
-    remark
+    id,
+    title,
+    date,
+    amount,
+    type,
+    status,
+    verified
   };
 }
 
 const rows = [
-  createData('R1', '123456', '2025.02.02', 'Create', 'Approved', 'ABC', '2025.02.02', 'N/A'),
-  createData('R1', '123456', '2025.02.02', 'Create', 'Approved', 'ABC', '2025.02.02', 'N/A'),
-  createData('R1', '123456', '2025.02.02', 'Create', 'Approved', 'ABC', '2025.02.02', 'N/A'),
-  createData('R1', '123456', '2025.02.02', 'Create', 'Approved', 'ABC', '2025.02.02', 'N/A'),
-  createData('R1', '123456', '2025.02.02', 'Create', 'Approved', 'ABC', '2025.02.02', 'N/A'),
-  createData('R1', '123456', '2025.02.02', 'Create', 'Approved', 'ABC', '2025.02.02', 'N/A'),
-  createData('R1', '123456', '2025.02.02', 'Create', 'Rejected', 'ABC', '2025.02.02', 'N/A'),
-  createData('R1', '123456', '2025.02.02', 'Create', 'Pending', 'ABC', '2025.02.02', 'N/A')
+  createData('1', 'salary_advance', '2025-08-10', '+500.00', 'advance', 'approved', 'true'),
+  createData('2', 'medical_allowance', '2025-08-11', '+200.00', 'advance', 'approved', 'true'),
+  createData('3', 'house_deposit', '2025-08-11', '+100.00', 'withdrawal', 'pending', 'false'),
+  createData('4', 'emergency_fund', '2025-08-12', '+300.00', 'advance', 'pending', 'false'),
+  createData('5', 'salary_payment', '2025-08-12', '+1500.00', 'salary', 'approved', 'true'),
+  createData('6', 'travel_allowance', '2025-08-09', '+150.00', 'advance', 'rejected', 'false'),
+  createData('7', 'bonus_payment', '2025-08-08', '+800.00', 'advance', 'pending', 'false'),
+  createData('8', 'overtime_pay', '2025-08-07', '+250.00', 'advance', 'approved', 'true')
 ];
 
 export default function EmployeeRequests() {
@@ -70,6 +70,16 @@ export default function EmployeeRequests() {
   const [rowsPerPage] = React.useState(9);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [filterStatus, setFilterStatus] = React.useState<string>('All');
+  const [approvalDialog, setApprovalDialog] = React.useState<{
+    open: boolean;
+    requestId: string;
+    action: 'approve' | 'reject';
+  }>({ open: false, requestId: '', action: 'approve' });
+  const [remark, setRemark] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [requests, setRequests] = React.useState(rows); // Use state for dynamic updates
+
+  const { user } = useAuthContext();
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -77,17 +87,17 @@ export default function EmployeeRequests() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Approved':
+      case 'approved':
         return {
           bg: '#ccf1ea',
           text: '#00b79a'
         };
-      case 'Rejected':
+      case 'rejected':
         return {
           bg: '#fcd6d5',
           text: '#ee3827'
         };
-      case 'Pending':
+      case 'pending':
         return {
           bg: '#fff2cc',
           text: '#ffb800'
@@ -100,18 +110,97 @@ export default function EmployeeRequests() {
     }
   };
 
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'withdrawal':
+        return {
+          bg: '#ccf1ea',
+          text: '#00b79a'
+        };
+      // case 'deposit':
+      //   return {
+      //     bg: '#ccf1ea',
+      //     text: '#00b79a'
+      //   };
+      // case 'advance':
+      //   return {
+      //     bg: '#e8f5fe',
+      //     text: '#3c92dc'
+      //   };
+      // case 'salary':
+      //   return {
+      //     bg: '#f3e5f5',
+      //     text: '#8e24aa'
+      //   };
+      default:
+        return {
+          bg: '#e8f5fe',
+          text: '#3c92dc'
+        };
+    }
+  };
+
   const filteredRows = React.useMemo(() => {
-    return rows.filter((row) => {
+    return requests.filter((row) => {
       const matchesSearch = searchTerm === '' || Object.values(row).some((value) => String(value).toLowerCase().includes(searchTerm.toLowerCase()));
 
-      const matchesFilter = filterStatus === 'All' || row.processStatus === filterStatus;
+      const matchesFilter = filterStatus === 'All' || row.status === filterStatus.toLowerCase();
 
       return matchesSearch && matchesFilter;
     });
-  }, [searchTerm, filterStatus]);
+  }, [searchTerm, filterStatus, requests]);
 
   const handleFilterClick = (status: string) => {
     setFilterStatus(status);
+  };
+
+  const handleApprovalAction = (requestId: string, action: 'approve' | 'reject') => {
+    setApprovalDialog({ open: true, requestId, action });
+    setRemark('');
+  };
+
+  const handleApprovalSubmit = async () => {
+    if (!remark.trim()) {
+      alert('Please enter a remark');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const processedBy = user?.name || 'Current User';
+
+      if (approvalDialog.action === 'approve') {
+        await employeeService.approveRequestWithRemark(approvalDialog.requestId, processedBy, remark);
+      } else {
+        await employeeService.rejectRequestWithRemark(approvalDialog.requestId, processedBy, remark);
+      }
+
+      // Update local state
+      setRequests((prev) =>
+        prev.map((row) =>
+          row.id === approvalDialog.requestId
+            ? {
+                ...row,
+                status: approvalDialog.action === 'approve' ? ('approved' as const) : ('rejected' as const),
+                verified: approvalDialog.action === 'approve' ? ('true' as const) : ('false' as const)
+              }
+            : row
+        )
+      );
+
+      setApprovalDialog({ open: false, requestId: '', action: 'approve' });
+      setRemark('');
+    } catch (error) {
+      console.error('Error updating request status:', error);
+      alert('Failed to update request status. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprovalCancel = () => {
+    setApprovalDialog({ open: false, requestId: '', action: 'approve' });
+    setRemark('');
   };
 
   return (
@@ -227,17 +316,28 @@ export default function EmployeeRequests() {
             </TableHead>
             <TableBody>
               {filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => {
-                const statusColors = getStatusColor(row.processStatus);
+                const statusColors = getStatusColor(row.status);
+                const typeColors = getTypeColor(row.type);
                 return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={index} sx={{ '& td': { borderColor: '#f0f0f0' } }}>
-                    <TableCell>{row.requestId}</TableCell>
-                    <TableCell>{row.employeeId}</TableCell>
-                    <TableCell>{row.requestedDate}</TableCell>
+                    <TableCell>{row.id}</TableCell>
+                    <TableCell>{row.title}</TableCell>
+                    <TableCell>{row.date}</TableCell>
+                    <TableCell align="right">
+                      <Box
+                        sx={{
+                          color: row.amount.startsWith('+') ? '#00b79a' : '#ee3827',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        {row.amount}
+                      </Box>
+                    </TableCell>
                     <TableCell>
                       <Box
                         sx={{
-                          backgroundColor: '#e8f5fe',
-                          color: '#3c92dc',
+                          backgroundColor: typeColors.bg,
+                          color: typeColors.text,
                           display: 'inline-block',
                           px: 2,
                           py: 0.5,
@@ -246,7 +346,7 @@ export default function EmployeeRequests() {
                           textAlign: 'center'
                         }}
                       >
-                        <Typography variant="body2">{row.requestedType}</Typography>
+                        <Typography variant="body2">{row.type}</Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
@@ -262,12 +362,60 @@ export default function EmployeeRequests() {
                           textAlign: 'center'
                         }}
                       >
-                        <Typography variant="body2">{row.processStatus}</Typography>
+                        <Typography variant="body2">{row.status}</Typography>
                       </Box>
                     </TableCell>
-                    <TableCell>{row.processedBy}</TableCell>
-                    <TableCell>{row.processedDate}</TableCell>
-                    <TableCell>{row.remark}</TableCell>
+                    <TableCell>
+                      <Box
+                        sx={{
+                          backgroundColor: row.verified === 'true' ? '#ccf1ea' : '#fcd6d5',
+                          color: row.verified === 'true' ? '#00b79a' : '#ee3827',
+                          display: 'inline-block',
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: 1,
+                          width: '80px',
+                          textAlign: 'center'
+                        }}
+                      >
+                        <Typography variant="body2">{row.verified === 'true' ? 'Yes' : 'No'}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      {row.status === 'pending' && (
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => handleApprovalAction(row.id, 'approve')}
+                            sx={{
+                              backgroundColor: '#00b79a',
+                              '&:hover': { backgroundColor: '#009688' },
+                              minWidth: '70px'
+                            }}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => handleApprovalAction(row.id, 'reject')}
+                            sx={{
+                              backgroundColor: '#ee3827',
+                              '&:hover': { backgroundColor: '#d32f2f' },
+                              minWidth: '70px'
+                            }}
+                          >
+                            Reject
+                          </Button>
+                        </Box>
+                      )}
+                      {row.status !== 'pending' && (
+                        <Typography variant="body2" color="textSecondary">
+                          {row.status === 'approved' ? 'Approved' : 'Rejected'}
+                        </Typography>
+                      )}
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -339,6 +487,38 @@ export default function EmployeeRequests() {
           </Box>
         </Box>
       </Paper>
+
+      {/* Approval Dialog */}
+      <Dialog open={approvalDialog.open} onClose={handleApprovalCancel} maxWidth="sm" fullWidth>
+        <DialogTitle>{approvalDialog.action === 'approve' ? 'Approve Request' : 'Reject Request'}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Are you sure you want to {approvalDialog.action} request ID: {approvalDialog.requestId}?
+            </Typography>
+            <TextField fullWidth multiline rows={3} label="Remark" value={remark} onChange={(e) => setRemark(e.target.value)} placeholder="Enter your remarks here..." variant="outlined" />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={handleApprovalCancel} variant="outlined">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleApprovalSubmit}
+            variant="contained"
+            color={approvalDialog.action === 'approve' ? 'success' : 'error'}
+            disabled={loading}
+            sx={{
+              backgroundColor: approvalDialog.action === 'approve' ? '#00b79a' : '#ee3827',
+              '&:hover': {
+                backgroundColor: approvalDialog.action === 'approve' ? '#009688' : '#d32f2f'
+              }
+            }}
+          >
+            {loading ? 'Processing...' : approvalDialog.action === 'approve' ? 'Approve' : 'Reject'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -1,19 +1,28 @@
 import api from './api';
-import type { User, LoginData, RegisterData, AuthResponse } from '../types/api';
+import type { User, LoginData, RegisterData, AuthResponse, LoginApiResponse, RefreshTokenResponse } from '../types/api';
 
 export const authService = {
   // Login user
-  login: async (credentials: LoginData): Promise<AuthResponse> => {
-    const response = await api.post('/auth/login', credentials);
-    const { user, token, refreshToken } = response.data.data;
+  login: async (credentials: LoginData): Promise<LoginApiResponse> => {
+    const response = await api.post<LoginApiResponse>('/corp-user/login', credentials);
+    const { data } = response.data;
 
-    // Store token in localStorage
-    localStorage.setItem('authToken', token);
-    if (refreshToken) {
-      localStorage.setItem('refreshToken', refreshToken);
-    }
+    // Store tokens in localStorage
+    localStorage.setItem('authToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    localStorage.setItem(
+      'user',
+      JSON.stringify({
+        id: data.id.toString(),
+        name: data.username,
+        email: data.email,
+        role: data.title,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      })
+    );
 
-    return { user, token, refreshToken };
+    return response.data;
   },
 
   // Register user
@@ -40,32 +49,36 @@ export const authService = {
       // Clear tokens from localStorage
       localStorage.removeItem('authToken');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
     }
   },
 
   // Get current user profile
   getCurrentUser: async (): Promise<User> => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+
     const response = await api.get('/auth/me');
     return response.data.data;
   },
 
   // Refresh token
-  refreshToken: async (): Promise<AuthResponse> => {
+  refreshToken: async (): Promise<RefreshTokenResponse> => {
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }
 
-    const response = await api.post('/auth/refresh', { refreshToken });
-    const { user, token, refreshToken: newRefreshToken } = response.data.data;
+    const response = await api.post<RefreshTokenResponse>('/corp-user/refresh-token', { refreshToken });
+    const { data } = response.data;
 
     // Update tokens in localStorage
-    localStorage.setItem('authToken', token);
-    if (newRefreshToken) {
-      localStorage.setItem('refreshToken', newRefreshToken);
-    }
+    localStorage.setItem('authToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
 
-    return { user, token, refreshToken: newRefreshToken };
+    return response.data;
   },
 
   // Forgot password
@@ -110,5 +123,10 @@ export const authService = {
   // Get stored token
   getToken: (): string | null => {
     return localStorage.getItem('authToken');
+  },
+
+  // Get stored refresh token
+  getRefreshToken: (): string | null => {
+    return localStorage.getItem('refreshToken');
   }
 };

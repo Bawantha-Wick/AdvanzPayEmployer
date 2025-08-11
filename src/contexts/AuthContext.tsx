@@ -49,7 +49,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [refetch]);
 
   const login = async (credentials: LoginData) => {
-    await loginMutation.mutateAsync(credentials);
+    try {
+      await loginMutation.mutateAsync(credentials);
+      // Refetch user data after successful login
+      await refetch();
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    }
   };
 
   const register = async (userData: RegisterData) => {

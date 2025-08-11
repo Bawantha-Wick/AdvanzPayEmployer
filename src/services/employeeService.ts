@@ -84,19 +84,19 @@ export const employeeService = {
     return response.data.data;
   },
 
-  // Approve request
-  approveRequest: async (requestId: string, processedBy: string, remark?: string): Promise<EmployeeRequest> => {
+  // Approve request with remark
+  approveRequestWithRemark: async (requestId: string, processedBy: string, remark: string): Promise<EmployeeRequest> => {
     return employeeService.updateRequestStatus(requestId, {
-      processStatus: 'Approved',
+      processStatus: 'approved',
       processedBy,
       remark
     });
   },
 
-  // Reject request
-  rejectRequest: async (requestId: string, processedBy: string, remark?: string): Promise<EmployeeRequest> => {
+  // Reject request with remark
+  rejectRequestWithRemark: async (requestId: string, processedBy: string, remark: string): Promise<EmployeeRequest> => {
     return employeeService.updateRequestStatus(requestId, {
-      processStatus: 'Rejected',
+      processStatus: 'rejected',
       processedBy,
       remark
     });
@@ -117,5 +117,13 @@ export const employeeService = {
   }> => {
     const response = await api.get('/employees/stats');
     return response.data.data;
+  },
+
+  // Toggle corporate employee status
+  toggleCorpEmployeeStatus: async (id: number): Promise<CorpEmployee> => {
+    const response = await api.put('/corp-emp/toggle-status', {
+      id: id
+    });
+    return response.data;
   }
 };

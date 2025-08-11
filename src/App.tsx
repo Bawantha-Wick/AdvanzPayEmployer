@@ -6,6 +6,8 @@ import NotFound from './components/core/NotFound';
 import ForgotPassword from './components/auth/ForgotPassword';
 import EmailVerification from './components/auth/EmailVerification';
 import ResetPassword from './components/auth/ResetPassword';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import PublicRoute from './components/auth/PublicRoute';
 import Layout from './components/core/Layout';
 import Dashboard from './components/dashboard/Dashboard';
 import Users from './components/user/Users';
@@ -22,15 +24,64 @@ function App() {
       <Router>
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<Welcome />} />
-          <Route path="/signin" element={<Welcome initialTab="signin" />} />
-          <Route path="/signup" element={<Welcome initialTab="signup" />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-email" element={<EmailVerification />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route
+            path="/"
+            element={
+              <PublicRoute>
+                <Welcome />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/signin"
+            element={
+              <PublicRoute>
+                <Welcome initialTab="signin" />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <PublicRoute>
+                <Welcome initialTab="signup" />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <PublicRoute>
+                <ForgotPassword />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/verify-email"
+            element={
+              <PublicRoute>
+                <EmailVerification />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/reset-password"
+            element={
+              <PublicRoute>
+                <ResetPassword />
+              </PublicRoute>
+            }
+          />
 
           {/* Protected routes with persistent sidebar */}
-          <Route path="/app" element={<Layout />}>
+          <Route
+            path="/app"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
             {/* User Management routes */}
