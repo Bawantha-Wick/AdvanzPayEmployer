@@ -16,6 +16,7 @@ import { IoMdSearch } from 'react-icons/io';
 import { IoAddCircleOutline } from 'react-icons/io5';
 import { MdFileUpload } from 'react-icons/md';
 import AddEmployee, { type EmployeeFormData } from './AddEmployee';
+import ExcelUpload from './ExcelUpload';
 import { employeeService } from '../../services/employeeService';
 import type { CorpEmployee } from '../../types/api';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -45,6 +46,7 @@ export default function Employees() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = React.useState('');
   const [openEmployeeModal, setOpenEmployeeModal] = React.useState(false);
+  const [openExcelUploadModal, setOpenExcelUploadModal] = React.useState(false);
   const [modalMode, setModalMode] = React.useState<'add' | 'edit'>('add');
   const [selectedEmployee, setSelectedEmployee] = React.useState<EmployeeFormData | undefined>(undefined);
   const [toggleLoading, setToggleLoading] = React.useState<number | null>(null);
@@ -139,6 +141,20 @@ export default function Employees() {
     setOpenEmployeeModal(false);
   };
 
+  const handleOpenExcelUploadModal = () => {
+    setOpenExcelUploadModal(true);
+  };
+
+  const handleCloseExcelUploadModal = () => {
+    setOpenExcelUploadModal(false);
+  };
+
+  const handleExcelUploadSuccess = () => {
+    // Refresh the employee list after successful upload
+    retryFetchEmployees();
+    setOpenExcelUploadModal(false);
+  };
+
   const handleSaveEmployee = () => {
     // For now, just close the modal and refresh the data
     // In a real application, you would make an API call to save the employee
@@ -199,6 +215,7 @@ export default function Employees() {
           <Button
             variant="outlined"
             startIcon={<MdFileUpload />}
+            onClick={handleOpenExcelUploadModal}
             sx={{
               borderRadius: '8px',
               color: '#e07a64',
@@ -421,6 +438,9 @@ export default function Employees() {
 
       {/* Add/Edit Employee Modal */}
       <AddEmployee open={openEmployeeModal} onClose={handleCloseEmployeeModal} onSave={handleSaveEmployee} mode={modalMode} employeeData={selectedEmployee} />
+
+      {/* Excel Upload Modal */}
+      <ExcelUpload open={openExcelUploadModal} onClose={handleCloseExcelUploadModal} onSuccess={handleExcelUploadSuccess} />
     </Box>
   );
 }

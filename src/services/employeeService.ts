@@ -93,12 +93,30 @@ export const employeeService = {
     });
   },
 
+  // Approve request (alias for consistency)
+  approveRequest: async (requestId: string, processedBy: string, remark?: string): Promise<EmployeeRequest> => {
+    return employeeService.updateRequestStatus(requestId, {
+      processStatus: 'approved',
+      processedBy,
+      remark: remark || ''
+    });
+  },
+
   // Reject request with remark
   rejectRequestWithRemark: async (requestId: string, processedBy: string, remark: string): Promise<EmployeeRequest> => {
     return employeeService.updateRequestStatus(requestId, {
       processStatus: 'rejected',
       processedBy,
       remark
+    });
+  },
+
+  // Reject request (alias for consistency)
+  rejectRequest: async (requestId: string, processedBy: string, remark?: string): Promise<EmployeeRequest> => {
+    return employeeService.updateRequestStatus(requestId, {
+      processStatus: 'rejected',
+      processedBy,
+      remark: remark || ''
     });
   },
 
@@ -124,6 +142,25 @@ export const employeeService = {
     const response = await api.put('/corp-emp/toggle-status', {
       id: id
     });
+    return response.data;
+  },
+
+  // Upload Excel file with employee data
+  uploadExcelFile: async (file: File): Promise<{ message: string; count: number }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post('/corp/upload-employees', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  },
+
+  // Upload employee data (from Excel preview)
+  uploadEmployeeData: async (employees: CreateCorpEmployeeData[]): Promise<{ message: string; count: number }> => {
+    const response = await api.post('/corp/employees/bulk-create', { employees });
     return response.data;
   }
 };
