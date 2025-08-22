@@ -1,6 +1,7 @@
 .welcome-container {
   display: flex;
   min-height: 100vh;
+  flex-direction: row;
 }
 
 .welcome-left {
@@ -10,6 +11,7 @@
   justify-content: center;
   background-color: var(--background-color);
   padding: 2rem;
+  min-width: 0;
 }
 
 .welcome-left .logo {
@@ -24,6 +26,25 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  min-width: 0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .welcome-container {
+    flex-direction: column;
+  }
+  
+  .welcome-left,
+  .welcome-right {
+    flex: none;
+    min-height: 50vh;
+    padding: 1rem;
+  }
+  
+  .welcome-left .logo {
+    max-width: 60%;
+  }
 }
 
 .auth-container {
@@ -31,6 +52,14 @@
   padding: 2rem;
   width: 100%;
   max-width: 480px;
+}
+
+/* Mobile responsiveness for auth container */
+@media (max-width: 768px) {
+  .auth-container {
+    padding: 1rem;
+    max-width: 100%;
+  }
 }
 
 .auth-tabs {
@@ -241,6 +270,19 @@
   justify-content: space-between;
   margin-top: 2rem;
   gap: 1rem;
+}
+
+/* Mobile responsiveness for buttons */
+@media (max-width: 480px) {
+  .buttons-container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .back-btn,
+  .submit-btn {
+    width: 100%;
+  }
 }
 
 .back-btn {

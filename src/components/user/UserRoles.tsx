@@ -12,6 +12,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
+import { useTheme, useMediaQuery } from '@mui/material';
 import { FaRegEdit } from 'react-icons/fa';
 import { InputAdornment, TextField } from '@mui/material';
 import { IoMdSearch } from 'react-icons/io';
@@ -56,6 +57,9 @@ const convertApiRoleToRoleData = (apiRole: CorpUserRoleItem): RoleData => {
 };
 
 const UserRoles: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [page, setPage] = React.useState(1); // API uses 1-based pagination
   const [searchTerm, setSearchTerm] = React.useState('');
   const [openRoleModal, setOpenRoleModal] = React.useState(false);
@@ -156,15 +160,22 @@ const UserRoles: React.FC = () => {
   };
 
   return (
-    <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+    <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: { xs: 2, md: 3 } }}>
+      <Box sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        justifyContent: 'space-between',
+        alignItems: { xs: 'stretch', md: 'center' },
+        mb: 2,
+        gap: { xs: 2, md: 0 }
+      }}>
         <TextField
           placeholder="Search roles"
           size="small"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{
-            width: '250px',
+            width: { xs: '100%', md: '250px' },
             '& .MuiOutlinedInput-root': {
               borderRadius: '20px',
               backgroundColor: '#ffffff',
@@ -195,6 +206,7 @@ const UserRoles: React.FC = () => {
           sx={{
             borderRadius: '8px',
             backgroundColor: '#e07a64',
+            fontSize: { xs: '0.875rem', md: '1rem' },
             '&:hover': {
               backgroundColor: '#d06954'
             }
@@ -211,8 +223,8 @@ const UserRoles: React.FC = () => {
       )}
 
       <Paper sx={{ width: '100%', overflow: 'hidden', boxShadow: 'none', borderRadius: 2 }}>
-        <TableContainer>
-          <Table stickyHeader aria-label="sticky table">
+        <TableContainer sx={{ maxHeight: { xs: '70vh', md: 'none' } }}>
+          <Table stickyHeader aria-label="sticky table" size={isMobile ? 'small' : 'medium'}>
             <TableHead>
               <TableRow sx={{ '& th': { fontWeight: 'bold', backgroundColor: '#ffffff' } }}>
                 {columns.map((column) => (

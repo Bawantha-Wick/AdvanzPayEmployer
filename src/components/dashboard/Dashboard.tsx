@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Card, CardContent, Typography, Paper, Popover } from '@mui/material';
+import { Box, Card, CardContent, Typography, Paper, Popover, Alert } from '@mui/material';
 import { ArrowUpward, Inventory, Payments, People, AccountBalanceWallet } from '@mui/icons-material';
 import dayjs, { Dayjs } from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -8,18 +8,40 @@ import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Area } from 'recharts';
 import { BsCalendar3 } from 'react-icons/bs';
 import { IoChevronDown } from 'react-icons/io5';
+import { useDashboardAnalytics } from '../../hooks/useDashboard';
+import { LoadingSpinner } from '../common/LoadingSpinner';
 
 const Dashboard: React.FC = () => {
+  // Get corpId from localStorage or use default value
+  const corpId = parseInt(localStorage.getItem('corpId') || '1');
+
   // Use the current date as default
   const currentDate = dayjs();
   // Make sure we have fresh instances of dayjs objects
   const startDate = currentDate.subtract(30, 'day');
   const endDate = currentDate;
 
-  const [dateRange, setDateRange] = useState({
-    start: startDate,
-    end: endDate
-  });
+  // Validation function to ensure from date is always less than to date
+  const validateDateRange = (start: Dayjs, end: Dayjs) => {
+    if (start.isAfter(end) || start.isSame(end)) {
+      return {
+        start: start,
+        end: start.add(1, 'day')
+      };
+    }
+    return { start, end };
+  };
+
+  const [dateRange, setDateRange] = useState(() =>
+    validateDateRange(startDate, endDate)
+  );
+
+  // Format dates for API call (YYYY-MM-DD format)
+  const fromDate = dateRange.start.format('YYYY-MM-DD');
+  const toDate = dateRange.end.format('YYYY-MM-DD');
+
+  // Fetch dashboard analytics with date range
+  const { data: analytics, isLoading, error } = useDashboardAnalytics(corpId, fromDate, toDate);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(startDate);
   const [selectionStep, setSelectionStep] = useState<'start' | 'end'>('start');
@@ -50,8 +72,14 @@ const Dashboard: React.FC = () => {
       // When selecting start date
       const newStart = date;
 
-      // Update date range with new start date
-      setDateRange((prev) => ({ ...prev, start: newStart }));
+      // If the new start date is after the current end date, adjust the end date
+      if (newStart.isAfter(dateRange.end)) {
+        setDateRange(validateDateRange(newStart, newStart.add(1, 'day')));
+      } else {
+        // Update date range with new start date
+        setDateRange((prev) => validateDateRange(newStart, prev.end));
+      }
+
       setSelectedDate(newStart);
 
       // Enable range highlighting
@@ -62,15 +90,13 @@ const Dashboard: React.FC = () => {
     } else {
       // When selecting end date
       // Ensure end date is not before start date
-      if (date.isBefore(dateRange.start)) {
-        // If user selects a date before start, swap the dates
-        setDateRange({
-          start: date,
-          end: dateRange.start
-        });
+      if (date.isBefore(dateRange.start) || date.isSame(dateRange.start)) {
+        // If user selects a date before or same as start, set it as start and adjust end
+        const newEnd = dateRange.start.isAfter(date) ? dateRange.start : date.add(1, 'day');
+        setDateRange(validateDateRange(date, newEnd));
       } else {
-        // Set the end date
-        setDateRange((prev) => ({ ...prev, end: date }));
+        // Set the end date (valid case where end > start)
+        setDateRange((prev) => validateDateRange(prev.start, date));
       }
 
       // Close the calendar after end date is selected
@@ -80,36 +106,41 @@ const Dashboard: React.FC = () => {
 
   const open = Boolean(anchorEl);
 
-  // Chart data to match the screenshot
-  const chartData = [
-    { month: 'Jan', amount: 15, year: '2022' },
-    { month: 'Feb', amount: 70, year: '2022' },
-    { month: 'Mar', amount: 150, year: '2022' },
-    { month: 'Apr', amount: 100, year: '2022' },
-    { month: 'May', amount: 180, year: '2022' },
-    { month: 'Jun', amount: 120, year: '2022' },
-    { month: 'Jul', amount: 160, year: '2022' },
-    { month: 'Aug', amount: 350, year: '2022' }, // Peak value
-    { month: 'Sep', amount: 100, year: '2022' },
-    { month: 'Oct', amount: 180, year: '2022' },
-    { month: 'Nov', amount: 140, year: '2022' },
-    { month: 'Dec', amount: 210, year: '2022' },
-    { month: 'Jan', amount: 50, year: '2022' },
-    { month: 'Feb', amount: 90, year: '2022' },
-    { month: 'Mar', amount: 170, year: '2022' },
-    { month: 'Apr', amount: 270, year: '2022' },
-    { month: 'May', amount: 220, year: '2022' },
-    { month: 'Jun', amount: 240, year: '2022' },
-    { month: 'Jul', amount: 190, year: '2022' },
-    { month: 'Aug', amount: 180, year: '2022' },
-    { month: 'Sep', amount: 130, year: '2022' },
-    { month: 'Oct', amount: 200, year: '2022' },
-    { month: 'Nov', amount: 180, year: '2022' },
-    { month: 'Dec', amount: 190, year: '2022' }
-  ];
+  // Transform API data for chart
+  const chartData = React.useMemo(() => {
+    if (!analytics?.dailyWithdrawals) {
+      return [];
+    }
+
+    return analytics.dailyWithdrawals.map((item) => {
+      const date = dayjs(item.date);
+      return {
+        date: item.date,
+        amount: item.amount,
+        displayDate: date.format('MMM DD'),
+        fullDate: date.format('MMM DD, YYYY')
+      };
+    });
+  }, [analytics?.dailyWithdrawals]);
+
+  // Show loading spinner while fetching data
+  if (isLoading) {
+    return <LoadingSpinner fullScreen message="Loading dashboard..." />;
+  }
+
+  // Show error message if API call fails
+  if (error) {
+    return (
+      <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: '#faf7f2' }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Failed to load dashboard data. Please try again later.
+        </Alert>
+      </Box>
+    );
+  }
 
   return (
-    <Box sx={{ p: 3, bgcolor: '#faf7f2' }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: '#faf7f2' }}>
       {/* Date Range Display */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box /> {/* Empty box for alignment to match Reports.tsx layout */}
@@ -143,13 +174,31 @@ const Dashboard: React.FC = () => {
             vertical: 'top',
             horizontal: 'right'
           }}
+          disableAutoFocus
+          disableEnforceFocus
+          disableRestoreFocus
+          disablePortal={false}
+          keepMounted={false}
           sx={{
+            '& .MuiPopover-root': {
+              position: 'fixed !important'
+            },
             '& .MuiPopover-paper': {
               overflow: 'hidden',
               borderRadius: '24px',
               boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.15)',
               border: '1px solid #e0e0e0',
-              backgroundColor: '#ffffff'
+              backgroundColor: '#ffffff',
+              position: 'fixed !important',
+              width: '360px !important',
+              height: '450px !important',
+              maxHeight: '450px !important',
+              minHeight: '450px !important',
+              transform: 'none !important',
+              willChange: 'auto'
+            },
+            '& .MuiPaper-root': {
+              transform: 'none !important'
             }
           }}
         >
@@ -168,150 +217,201 @@ const Dashboard: React.FC = () => {
               )}
             </Typography>
           </Box>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DateCalendar
-              value={selectedDate}
-              onChange={handleDateChange}
-              views={['day']}
-              slotProps={{
-                day: (ownerState) => {
-                  if (!ownerState.day) return {};
+          <Box sx={{
+            width: '360px',
+            height: '380px',
+            overflow: 'hidden',
+            position: 'relative'
+          }}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DateCalendar
+                value={selectedDate}
+                onChange={handleDateChange}
+                views={['day']}
+                fixedWeekNumber={6}
+                slotProps={{
+                  day: (ownerState) => {
+                    if (!ownerState.day) return {};
 
-                  // Format dates to compare
-                  const currentDayFormatted = ownerState.day.format('YYYY-MM-DD');
-                  const startDateFormatted = dateRange.start.format('YYYY-MM-DD');
-                  const endDateFormatted = dateRange.end.format('YYYY-MM-DD');
+                    // Format dates to compare
+                    const currentDayFormatted = ownerState.day.format('YYYY-MM-DD');
+                    const startDateFormatted = dateRange.start.format('YYYY-MM-DD');
+                    const endDateFormatted = dateRange.end.format('YYYY-MM-DD');
 
-                  // Check if this day is the start date
-                  const isStartDate = currentDayFormatted === startDateFormatted;
+                    // Check if this day is the start date
+                    const isStartDate = currentDayFormatted === startDateFormatted;
 
-                  // Check if this day is the end date
-                  const isEndDate = currentDayFormatted === endDateFormatted;
+                    // Check if this day is the end date
+                    const isEndDate = currentDayFormatted === endDateFormatted;
 
-                  // Check if this day is between start and end (for highlighting the range)
-                  const isInRange = highlightRange && ownerState.day.isAfter(dateRange.start) && ownerState.day.isBefore(dateRange.end);
+                    // Check if this day is between start and end (for highlighting the range)
+                    const isInRange = highlightRange && ownerState.day.isAfter(dateRange.start) && ownerState.day.isBefore(dateRange.end);
 
-                  if (isStartDate) {
-                    return {
-                      sx: {
-                        backgroundColor: '#ff6b00',
-                        color: 'white',
-                        '&:hover': {
-                          backgroundColor: '#ff6b00'
+                    if (isStartDate) {
+                      return {
+                        sx: {
+                          backgroundColor: '#ff6b00',
+                          color: 'white',
+                          '&:hover': {
+                            backgroundColor: '#ff6b00'
+                          }
                         }
-                      }
-                    };
-                  } else if (isEndDate) {
-                    return {
-                      sx: {
-                        backgroundColor: '#ff8c40',
-                        color: 'white',
-                        '&:hover': {
-                          backgroundColor: '#ff8c40'
+                      };
+                    } else if (isEndDate) {
+                      return {
+                        sx: {
+                          backgroundColor: '#ff8c40',
+                          color: 'white',
+                          '&:hover': {
+                            backgroundColor: '#ff8c40'
+                          }
                         }
-                      }
-                    };
-                  } else if (isInRange) {
-                    return {
-                      sx: {
-                        backgroundColor: 'rgba(255, 107, 0, 0.1)',
-                        '&:hover': {
-                          backgroundColor: 'rgba(255, 107, 0, 0.2)'
+                      };
+                    } else if (isInRange) {
+                      return {
+                        sx: {
+                          backgroundColor: 'rgba(255, 107, 0, 0.1)',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 107, 0, 0.2)'
+                          }
                         }
-                      }
-                    };
+                      };
+                    }
+                    return {};
                   }
-                  return {};
-                }
-              }}
-              sx={{
-                width: '320px',
-                bgcolor: '#ffffff',
-                color: '#333',
-                padding: '12px',
-                '& .MuiPickersCalendarHeader-label': {
+                }}
+                sx={{
+                  width: '320px !important',
+                  height: '380px !important',
+                  maxHeight: '380px !important',
+                  minHeight: '380px !important',
+                  bgcolor: '#ffffff',
                   color: '#333',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  textTransform: 'capitalize',
-                  textAlign: 'center',
-                  margin: 'auto'
-                },
-                '& .MuiPickersCalendarHeader-root': {
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0 8px',
-                  marginBottom: '8px'
-                },
-                '& .MuiPickersCalendarHeader-switchViewButton': {
-                  color: '#666'
-                },
-                '& .MuiPickersArrowSwitcher-button': {
-                  color: '#666'
-                },
-                '& .MuiDayCalendar-header': {
-                  '& .MuiDayCalendar-weekDayLabel': {
-                    color: '#666',
-                    fontSize: '12px',
-                    width: '36px',
-                    height: '36px',
-                    margin: '0'
-                  }
-                },
-                '& .MuiPickersDay-root': {
-                  color: '#333',
-                  fontSize: '14px',
-                  width: '32px',
-                  height: '32px',
-                  margin: '2px',
-                  borderRadius: '50%',
-                  '&.Mui-selected': {
-                    backgroundColor: '#ff6b00',
-                    color: '#fff',
-                    '&:hover': {
-                      backgroundColor: '#ff6b00'
-                    },
-                    '&:focus': {
-                      backgroundColor: '#ff6b00'
+                  padding: '12px',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  '& .MuiPickersCalendarHeader-label': {
+                    color: '#333',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    textTransform: 'capitalize',
+                    textAlign: 'center',
+                    margin: 'auto'
+                  },
+                  '& .MuiPickersCalendarHeader-root': {
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 8px',
+                    marginBottom: '8px',
+                    height: '40px !important',
+                    minHeight: '40px !important'
+                  },
+                  '& .MuiPickersCalendarHeader-switchViewButton': {
+                    color: '#666'
+                  },
+                  '& .MuiPickersArrowSwitcher-button': {
+                    color: '#666'
+                  },
+                  '& .MuiDayCalendar-header': {
+                    height: '40px !important',
+                    minHeight: '40px !important',
+                    '& .MuiDayCalendar-weekDayLabel': {
+                      color: '#666',
+                      fontSize: '12px',
+                      width: '36px !important',
+                      height: '36px !important',
+                      minHeight: '36px !important',
+                      margin: '0'
                     }
                   },
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 107, 0, 0.1)'
+                  '& .MuiPickersDay-root': {
+                    color: '#333',
+                    fontSize: '14px',
+                    width: '32px !important',
+                    height: '32px !important',
+                    minWidth: '32px !important',
+                    minHeight: '32px !important',
+                    margin: '2px',
+                    borderRadius: '50%',
+                    '&.Mui-selected': {
+                      backgroundColor: '#ff6b00',
+                      color: '#fff',
+                      '&:hover': {
+                        backgroundColor: '#ff6b00'
+                      },
+                      '&:focus': {
+                        backgroundColor: '#ff6b00'
+                      }
+                    },
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 107, 0, 0.1)'
+                    },
+                    '&.MuiPickersDay-today': {
+                      border: '1px solid #ff6b00'
+                    },
+                    '&.Mui-disabled': {
+                      color: '#cccccc'
+                    }
                   },
-                  '&.MuiPickersDay-today': {
-                    border: '1px solid #ff6b00'
+                  '& .MuiPickersDay-hiddenDaySpacingFiller': {
+                    backgroundColor: 'transparent',
+                    width: '32px !important',
+                    height: '32px !important'
                   },
-                  '&.Mui-disabled': {
-                    color: '#cccccc'
+                  '& .MuiDialogActions-root': {
+                    display: 'none'
+                  },
+                  '& .MuiPickersSlideTransition-root': {
+                    minHeight: '280px !important',
+                    height: '280px !important',
+                    maxHeight: '280px !important',
+                    overflow: 'hidden'
+                  },
+                  '& .MuiDayCalendar-monthContainer': {
+                    position: 'relative',
+                    height: '280px !important',
+                    minHeight: '280px !important',
+                    maxHeight: '280px !important'
+                  },
+                  '& .MuiDayCalendar-slideTransition': {
+                    minHeight: '280px !important',
+                    height: '280px !important',
+                    maxHeight: '280px !important'
+                  },
+                  '& .MuiDayCalendar-weekContainer': {
+                    height: '40px !important',
+                    minHeight: '40px !important',
+                    margin: '2px 0'
                   }
-                },
-                '& .MuiPickersDay-hiddenDaySpacingFiller': {
-                  backgroundColor: 'transparent'
-                },
-                '& .MuiDialogActions-root': {
-                  display: 'none'
-                },
-                '& .MuiPickersSlideTransition-root': {
-                  minHeight: '240px'
-                }
-              }}
-            />
-          </LocalizationProvider>
+                }}
+              />
+            </LocalizationProvider>
+          </Box>
         </Popover>
       </Box>
 
       {/* Stat Cards */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
-        {/* Advance Requests Card */}
-        <Box sx={{ flex: '1 1 calc(25% - 24px)', minWidth: '8rem' }}>
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: {
+          xs: '1fr',
+          sm: '1fr 1fr',
+          md: '1fr 1fr',
+          lg: 'repeat(4, 1fr)'
+        },
+        gap: 3,
+        mb: 4
+      }}>
+        {/* Withdrawal Requests Card */}
+        <Box>
           <Card sx={{ bgcolor: '#e8d7cd', borderRadius: '40px', position: 'relative', height: '11.5rem' }}>
             <CardContent>
               <Typography variant="subtitle1" sx={{ color: '#666' }}>
-                Advance requests
+                Withdrawal requests
               </Typography>
               <Typography variant="h3" sx={{ my: 2, fontWeight: 'bold' }}>
-                40
+                {analytics?.withdrawalRequestCount || 0}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <ArrowUpward sx={{ color: '#4CAF50', fontSize: 16, mr: 0.5 }} />
@@ -339,15 +439,15 @@ const Dashboard: React.FC = () => {
           </Card>
         </Box>
 
-        {/* Total Advance Amount Card */}
-        <Box sx={{ flex: '1 1 calc(25% - 24px)', minWidth: '8rem' }}>
+        {/* Total Withdrawal Amount Card */}
+        <Box>
           <Card sx={{ bgcolor: '#fff', borderRadius: '40px', position: 'relative', height: '11.5rem' }}>
             <CardContent>
               <Typography variant="subtitle1" sx={{ color: '#666' }}>
-                Total Advance amount
+                Total Withdrawal amount
               </Typography>
               <Typography variant="h3" sx={{ my: 2, fontWeight: 'bold' }}>
-                1000 USD
+                {analytics?.totalWithdrawalAmount || 0} USD
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <ArrowUpward sx={{ color: '#4CAF50', fontSize: 16, mr: 0.5 }} />
@@ -376,14 +476,14 @@ const Dashboard: React.FC = () => {
         </Box>
 
         {/* Employees Card */}
-        <Box sx={{ flex: '1 1 calc(25% - 24px)', minWidth: '8rem' }}>
+        <Box>
           <Card sx={{ bgcolor: '#e8d7cd', borderRadius: '40px', position: 'relative', height: '11.5rem' }}>
             <CardContent>
               <Typography variant="subtitle1" sx={{ color: '#666' }}>
                 Employees
               </Typography>
               <Typography variant="h3" sx={{ my: 2, fontWeight: 'bold' }}>
-                40
+                {analytics?.employeeCount || 0}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <ArrowUpward sx={{ color: '#4CAF50', fontSize: 16, mr: 0.5 }} />
@@ -412,14 +512,14 @@ const Dashboard: React.FC = () => {
         </Box>
 
         {/* Liability Card */}
-        <Box sx={{ flex: '1 1 calc(25% - 24px)', minWidth: '8rem' }}>
+        <Box>
           <Card sx={{ bgcolor: '#fff', borderRadius: '40px', position: 'relative', height: '11.5rem' }}>
             <CardContent>
               <Typography variant="subtitle1" sx={{ color: '#666' }}>
-                Liability
+                Total Liability
               </Typography>
               <Typography variant="h3" sx={{ my: 2, fontWeight: 'bold' }}>
-                0
+                {analytics?.totalLiability || 0} USD
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <ArrowUpward sx={{ color: '#4CAF50', fontSize: 16, mr: 0.5 }} />
@@ -449,57 +549,60 @@ const Dashboard: React.FC = () => {
       </Box>
 
       {/* Chart Section */}
-      <Paper sx={{ p: 3, borderRadius: '40px', mb: 4 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Advance amount over time
+      <Paper sx={{ p: { xs: 2, md: 3 }, borderRadius: '40px', mb: 4 }}>
+        <Typography variant="h6" sx={{ mb: 2, fontSize: { xs: '1rem', md: '1.25rem' } }}>
+          Withdrawal amount over time
         </Typography>
-        <Box sx={{ height: 300, position: 'relative' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-              <defs>
-                <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ff6b6b" stopOpacity={0.2} />
-                  <stop offset="50%" stopColor="#ffc29d" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#fff8f0" stopOpacity={0.1} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
-              <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#888' }} tickMargin={10} interval={0} />
-              <YAxis axisLine={false} tickLine={false} domain={[0, 400]} ticks={[0, 100, 200, 300, 400]} tickFormatter={(value) => (value === 0 ? '0' : `${value}USD`)} tick={{ fontSize: 10, fill: '#888' }} />
-              <Tooltip
-                formatter={(value) => [`${value} USD`]}
-                labelFormatter={() => ''}
-                contentStyle={{
-                  backgroundColor: '#ff4d4d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 4,
-                  fontSize: 12,
-                  padding: '2px 8px'
-                }}
-                itemStyle={{ color: 'white' }}
-                labelStyle={{ color: 'white' }}
-              />
-              <Area type="monotone" dataKey="amount" stroke="none" fill="url(#colorAmount)" />
-              <Line type="monotone" dataKey="amount" stroke="#ff6b6b" strokeWidth={2} dot={{ r: 3, fill: '#ff6b6b', strokeWidth: 0 }} activeDot={{ r: 5, fill: '#ff6b6b', strokeWidth: 0 }} />
-
-              {/* Custom peak value label */}
-              <text
-                x="28%"
-                y="105"
-                textAnchor="middle"
-                fill="white"
-                style={{
-                  fontSize: '12px',
-                  fontWeight: 'normal'
-                }}
-              >
-                <tspan x="28%" dy="0" dx="5">
-                  350 USD
-                </tspan>
-              </text>
-            </LineChart>
-          </ResponsiveContainer>
+        <Box sx={{ height: { xs: 250, md: 200 }, position: 'relative' }}>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ff6b6b" stopOpacity={0.2} />
+                    <stop offset="50%" stopColor="#ffc29d" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#fff8f0" stopOpacity={0.1} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
+                <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#888' }} tickMargin={10} interval={0} />
+                <YAxis axisLine={false} tickLine={false} domain={[0, 'dataMax + 50']} tickFormatter={(value) => (value === 0 ? '0' : `${value}USD`)} tick={{ fontSize: 10, fill: '#888' }} />
+                <Tooltip
+                  formatter={(value) => [`${value} USD`, 'Withdrawal Amount']}
+                  labelFormatter={(label, payload) => {
+                    if (payload && payload[0]) {
+                      return payload[0].payload.fullDate;
+                    }
+                    return label;
+                  }}
+                  contentStyle={{
+                    backgroundColor: '#ff4d4d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4,
+                    fontSize: 12,
+                    padding: '8px 12px'
+                  }}
+                  itemStyle={{ color: 'white' }}
+                  labelStyle={{ color: 'white' }}
+                />
+                <Area type="monotone" dataKey="amount" stroke="none" fill="url(#colorAmount)" />
+                <Line type="monotone" dataKey="amount" stroke="#ff6b6b" strokeWidth={2} dot={{ r: 3, fill: '#ff6b6b', strokeWidth: 0 }} activeDot={{ r: 5, fill: '#ff6b6b', strokeWidth: 0 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              color: '#666'
+            }}>
+              <Typography variant="body2">
+                No withdrawal data available for the selected period
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Paper>
     </Box>

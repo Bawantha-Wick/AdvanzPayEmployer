@@ -1,21 +1,27 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { MdKeyboardArrowDown, MdKeyboardArrowRight } from 'react-icons/md';
 import { FaRegUser } from 'react-icons/fa';
 import { BsFileEarmarkText } from 'react-icons/bs';
-import { IoHomeOutline, IoAddOutline } from 'react-icons/io5';
+import { IoHomeOutline, IoAddOutline, IoClose } from 'react-icons/io5';
 import { RiFileListLine } from 'react-icons/ri';
 import { HiOutlineUserGroup } from 'react-icons/hi2';
 import { BiLogOut } from 'react-icons/bi';
+import { IoSettingsOutline } from 'react-icons/io5';
 import innerLogo from '../../assets/inner_logo.png';
 import profileImg from '../../assets/profile.png';
 import { LuUserRoundPlus, LuUserRoundCheck } from 'react-icons/lu';
 import { useAuthContext } from '../../contexts/useAuthContext';
 
-const SideBar: React.FC = () => {
+interface SideBarProps {
+  onClose?: () => void;
+}
+
+const SideBar: React.FC<SideBarProps> = ({ onClose }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuthContext();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['userManagement']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['settings']);
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenus((prev) => (prev.includes(menuId) ? prev.filter((id) => id !== menuId) : [...prev, menuId]));
@@ -62,8 +68,18 @@ const SideBar: React.FC = () => {
     marginRight: '1.5rem'
   };
 
+  const isActiveRoute = (path: string) => location.pathname === path;
+
   return (
-    <div className="w-84 bg-[#DC7356] min-h-screen flex flex-col text-white">
+    <div className="w-84 lg:w-84 bg-[#DC7356] min-h-screen flex flex-col text-white relative">
+      {/* Mobile close button */}
+      <button
+        onClick={onClose}
+        className="lg:hidden absolute top-4 right-4 p-2 text-white hover:bg-[#DC7356] rounded-full z-10"
+      >
+        <IoClose size={24} />
+      </button>
+
       <div className="flex justify-center py-4">
         <img src={innerLogo} alt="AdvanzPay" className="h-15" style={{ marginTop: '1.5rem' }} />
       </div>
@@ -74,31 +90,8 @@ const SideBar: React.FC = () => {
         <div style={menuItemStyles}>
           <Link to="/app/dashboard" className="flex text-white hover:bg-[#DC7356] transition-colors">
             <IoHomeOutline className="text-xl" style={iconStyles} />
-            <span>Dashboard</span>
+            <span className={isActiveRoute('/app/dashboard') ? 'font-bold' : ''}>Dashboard</span>
           </Link>
-        </div>
-
-        {/* User Management */}
-        <div style={menuItemStyles}>
-          <button onClick={() => toggleMenu('userManagement')} className="w-full flex items-center justify-between text-white hover:bg-[#DC7356] transition-colors">
-            <div className="flex items-center">
-              <FaRegUser className="text-xl" style={iconStyles} />
-              <span>User Management</span>
-            </div>
-            {expandedMenus.includes('userManagement') ? <MdKeyboardArrowDown className="text-xl" style={expandIconStyles} /> : <MdKeyboardArrowRight className="text-xl" style={expandIconStyles} />}
-          </button>
-          {expandedMenus.includes('userManagement') && (
-            <div className="flex flex-col bg-[#DC7356]" style={subMenuStyles}>
-              <Link to="/app/users" className="flex block py-2">
-                <IoAddOutline className="text-xl" style={subMenuIconStyles} />
-                <span style={subMenuItemStyles}>Users</span>
-              </Link>
-              <Link to="/app/user-roles" className="flex block py-2">
-                <RiFileListLine className="text-xl" style={subMenuIconStyles} />
-                <span style={subMenuItemStyles}>User Roles</span>
-              </Link>
-            </div>
-          )}
         </div>
 
         {/* Employee Management */}
@@ -114,16 +107,16 @@ const SideBar: React.FC = () => {
             <div className="bg-[#DC7356]" style={subMenuStyles}>
               <Link to="/app/employees" className="flex block py-2">
                 <FaRegUser className="text-l" style={subMenuIconStyles} />
-                <span style={subMenuItemStyles}>Employees</span>
+                <span style={subMenuItemStyles} className={isActiveRoute('/app/employees') ? 'font-bold' : ''}>Employees</span>
               </Link>
               <Link to="/app/employee-requests" className="flex block py-2">
                 <LuUserRoundPlus className="text-xl" style={subMenuIconStyles} />
-                <span style={subMenuItemStyles}>Employee Requests</span>
+                <span style={subMenuItemStyles} className={isActiveRoute('/app/employee-requests') ? 'font-bold' : ''}>Employee Requests</span>
               </Link>
-              <Link to="/app/authorize-employees" className="flex block py-2">
+              {/* <Link to="/app/authorize-employees" className="flex block py-2">
                 <LuUserRoundCheck className="text-xl" style={subMenuIconStyles} />
                 <span style={subMenuItemStyles}>Authorize Employees</span>
-              </Link>
+              </Link> */}
             </div>
           )}
         </div>
@@ -132,7 +125,7 @@ const SideBar: React.FC = () => {
         <div style={menuItemStyles}>
           <Link to="/app/settlements" className="flex text-white hover:bg-[#DC7356] transition-colors">
             <BsFileEarmarkText className="text-xl" style={iconStyles} />
-            <span>Settlements</span>
+            <span className={isActiveRoute('/app/settlements') ? 'font-bold' : ''}>Settlements</span>
           </Link>
         </div>
 
@@ -140,18 +133,32 @@ const SideBar: React.FC = () => {
         <div style={menuItemStyles}>
           <Link to="/app/reports" className="flex text-white hover:bg-[#DC7356] transition-colors">
             <BsFileEarmarkText className="text-xl" style={iconStyles} />
-            <span>Reports</span>
+            <span className={isActiveRoute('/app/reports') ? 'font-bold' : ''}>Reports</span>
           </Link>
         </div>
-        {/* <div style={menuItemStyles}>
-          <button onClick={() => toggleMenu('reports')} className="w-full flex items-center justify-between text-white hover:bg-[#DC7356] transition-colors">
+
+        {/* Settings */}
+        <div style={menuItemStyles}>
+          <button onClick={() => toggleMenu('settings')} className="w-full flex items-center justify-between text-white hover:bg-[#DC7356] transition-colors">
             <div className="flex items-center">
-              <BsFileEarmarkText className="text-xl" style={iconStyles} />
-              <span>Reports</span>
+              <IoSettingsOutline className="text-xl" style={iconStyles} />
+              <span>Settings</span>
             </div>
-            {expandedMenus.includes('reports') ? <MdKeyboardArrowDown className="text-xl" style={expandIconStyles} /> : <MdKeyboardArrowRight className="text-xl" style={expandIconStyles} />}
+            {expandedMenus.includes('settings') ? <MdKeyboardArrowDown className="text-xl" style={expandIconStyles} /> : <MdKeyboardArrowRight className="text-xl" style={expandIconStyles} />}
           </button>
-        </div> */}
+          {expandedMenus.includes('settings') && (
+            <div className="flex flex-col bg-[#DC7356]" style={subMenuStyles}>
+              <Link to="/app/users" className="flex block py-2">
+                <FaRegUser className="text-xl" style={subMenuIconStyles} />
+                <span style={subMenuItemStyles} className={isActiveRoute('/app/users') ? 'font-bold' : ''}>Users</span>
+              </Link>
+              <Link to="/app/user-roles" className="flex block py-2">
+                <RiFileListLine className="text-xl" style={subMenuIconStyles} />
+                <span style={subMenuItemStyles} className={isActiveRoute('/app/user-roles') ? 'font-bold' : ''}>User Roles</span>
+              </Link>
+            </div>
+          )}
+        </div>
       </nav>
 
       {/* User Profile */}

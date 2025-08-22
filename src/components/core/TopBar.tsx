@@ -1,15 +1,26 @@
 import React from 'react';
 import Stack from '@mui/material/Stack';
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined';
+import { HiOutlineMenuAlt3 } from 'react-icons/hi';
+
 interface TopBarProps {
   title?: string;
   notificationCount?: number;
+  onMenuClick?: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ title = 'Dashboard', notificationCount = 1 }) => {
+const TopBar: React.FC<TopBarProps> = ({ title = 'Dashboard', notificationCount = 1, onMenuClick }) => {
   return (
-    <div className="h-22 flex items-center bg-white">
-      <label className="text-3xl font-semibold" style={{ marginLeft: '1rem', color: '#66676a' }}>
+    <div className="h-22 flex items-center bg-white px-4 lg:px-0">
+      {/* Mobile menu button */}
+      <button
+        onClick={onMenuClick}
+        className="lg:hidden p-2 mr-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
+      >
+        <HiOutlineMenuAlt3 size={24} />
+      </button>
+
+      <label className="text-xl lg:text-3xl font-semibold flex-1" style={{ marginLeft: '1rem', color: '#66676a' }}>
         {title}
       </label>
 

@@ -11,7 +11,7 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { FaRegEdit } from 'react-icons/fa';
-import { InputAdornment, TextField, Switch } from '@mui/material';
+import { InputAdornment, TextField, Switch, useTheme, useMediaQuery } from '@mui/material';
 import { IoMdSearch } from 'react-icons/io';
 import { IoAddCircleOutline } from 'react-icons/io5';
 import { MdFileUpload } from 'react-icons/md';
@@ -42,6 +42,9 @@ const columns: readonly Column[] = [
 ];
 
 export default function Employees() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   const [currentPage, setCurrentPage] = React.useState(1);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = React.useState('');
@@ -188,15 +191,22 @@ export default function Employees() {
   }
 
   return (
-    <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+    <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: { xs: 2, md: 3 } }}>
+      <Box sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        justifyContent: 'space-between',
+        alignItems: { xs: 'stretch', md: 'center' },
+        mb: 2,
+        gap: { xs: 2, md: 0 }
+      }}>
         <TextField
           placeholder="Search employees..."
           size="small"
           value={searchTerm}
           onChange={handleSearchChange}
           sx={{
-            width: '250px',
+            width: { xs: '100%', md: '250px' },
             '& .MuiOutlinedInput-root': {
               borderRadius: '20px',
               backgroundColor: '#ffffff'
@@ -211,7 +221,11 @@ export default function Employees() {
           }}
         />
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2
+        }}>
           <Button
             variant="outlined"
             startIcon={<MdFileUpload />}
@@ -220,6 +234,7 @@ export default function Employees() {
               borderRadius: '8px',
               color: '#e07a64',
               borderColor: '#e07a64',
+              fontSize: { xs: '0.875rem', md: '1rem' },
               '&:hover': {
                 borderColor: '#d06954',
                 backgroundColor: 'rgba(224, 122, 100, 0.04)'
@@ -236,6 +251,7 @@ export default function Employees() {
             sx={{
               borderRadius: '8px',
               backgroundColor: '#e07a64',
+              fontSize: { xs: '0.875rem', md: '1rem' },
               '&:hover': {
                 backgroundColor: '#d06954'
               }
@@ -247,8 +263,8 @@ export default function Employees() {
       </Box>
 
       <Paper sx={{ width: '100%', overflow: 'hidden', boxShadow: 'none', borderRadius: 2 }}>
-        <TableContainer>
-          <Table stickyHeader aria-label="sticky table">
+        <TableContainer sx={{ maxHeight: { xs: '70vh', md: 'none' } }}>
+          <Table stickyHeader aria-label="sticky table" size={isMobile ? 'small' : 'medium'}>
             <TableHead>
               <TableRow sx={{ '& th': { fontWeight: 'bold', backgroundColor: '#ffffff' } }}>
                 {columns.map((column) => (

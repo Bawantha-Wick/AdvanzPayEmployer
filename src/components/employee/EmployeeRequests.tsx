@@ -9,7 +9,7 @@ import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { InputAdornment, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { InputAdornment, TextField, Dialog, DialogTitle, DialogContent, DialogActions, useTheme, useMediaQuery } from '@mui/material';
 import { IoMdSearch } from 'react-icons/io';
 import { employeeService } from '../../services/employeeService';
 import { useAuthContext } from '../../contexts/useAuthContext';
@@ -61,11 +61,14 @@ const rows = [
   createData('4', 'emergency_fund', '2025-08-12', '+300.00', 'advance', 'pending', 'false'),
   createData('5', 'salary_payment', '2025-08-12', '+1500.00', 'salary', 'approved', 'true'),
   createData('6', 'travel_allowance', '2025-08-09', '+150.00', 'advance', 'rejected', 'false'),
-  createData('7', 'bonus_payment', '2025-08-08', '+800.00', 'advance', 'pending', 'false'),
-  createData('8', 'overtime_pay', '2025-08-07', '+250.00', 'advance', 'approved', 'true')
+  // createData('7', 'bonus_payment', '2025-08-08', '+800.00', 'advance', 'pending', 'false'),
+  // createData('8', 'overtime_pay', '2025-08-07', '+250.00', 'advance', 'approved', 'true')
 ];
 
 export default function EmployeeRequests() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [page, setPage] = React.useState(0);
   const [rowsPerPage] = React.useState(9);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -204,15 +207,22 @@ export default function EmployeeRequests() {
   };
 
   return (
-    <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+    <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: { xs: 2, md: 3 } }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', lg: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'stretch', lg: 'center' }, 
+        mb: 2,
+        gap: { xs: 2, lg: 0 }
+      }}>
         <TextField
           placeholder="Search mail"
           size="small"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{
-            width: '250px',
+            width: { xs: '100%', lg: '250px' },
             '& .MuiOutlinedInput-root': {
               borderRadius: '20px',
               backgroundColor: '#ffffff'
@@ -227,8 +237,14 @@ export default function EmployeeRequests() {
           }}
         />
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="body2" sx={{ mr: 1 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'stretch', sm: 'center' }, 
+          gap: 1,
+          flexWrap: 'wrap'
+        }}>
+          <Typography variant="body2" sx={{ mr: { xs: 0, sm: 1 }, mb: { xs: 1, sm: 0 } }}>
             Filtered by
           </Typography>
           <Button
@@ -303,8 +319,8 @@ export default function EmployeeRequests() {
       </Box>
 
       <Paper sx={{ width: '100%', overflow: 'hidden', boxShadow: 'none', borderRadius: 2 }}>
-        <TableContainer>
-          <Table stickyHeader aria-label="sticky table">
+        <TableContainer sx={{ maxHeight: { xs: '70vh', md: 'none' } }}>
+          <Table stickyHeader aria-label="sticky table" size={isMobile ? 'small' : 'medium'}>
             <TableHead>
               <TableRow sx={{ '& th': { fontWeight: 'bold', backgroundColor: '#ffffff' } }}>
                 {columns.map((column) => (

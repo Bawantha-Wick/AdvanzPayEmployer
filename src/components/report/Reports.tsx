@@ -9,7 +9,7 @@ import TableRow from '@mui/material/TableRow';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import { InputAdornment, TextField, Popover } from '@mui/material';
+import { InputAdornment, TextField, Popover, useTheme, useMediaQuery } from '@mui/material';
 import { IoMdSearch } from 'react-icons/io';
 import { AiFillFilePdf } from 'react-icons/ai';
 import { FiPrinter } from 'react-icons/fi';
@@ -60,6 +60,9 @@ const rows = [
 ];
 
 export default function Reports() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [page, setPage] = React.useState(0);
   const [rowsPerPage] = React.useState(9);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -154,15 +157,22 @@ export default function Reports() {
   }, [searchTerm]);
 
   return (
-    <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+    <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: { xs: 2, md: 3 } }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', lg: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'stretch', lg: 'center' }, 
+        mb: 2,
+        gap: { xs: 2, lg: 0 }
+      }}>
         <TextField
           placeholder="Search Report"
           size="small"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{
-            width: '250px',
+            width: { xs: '100%', lg: '250px' },
             '& .MuiOutlinedInput-root': {
               borderRadius: '20px',
               backgroundColor: '#ffffff'
@@ -182,7 +192,8 @@ export default function Reports() {
             alignItems: 'center',
             borderRadius: '4px',
             padding: '4px 12px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            alignSelf: { xs: 'flex-end', lg: 'center' }
           }}
           onClick={handleDateRangeClick}
         >
@@ -361,8 +372,8 @@ export default function Reports() {
       </Box>
 
       <Paper sx={{ width: '100%', overflow: 'hidden', boxShadow: 'none', borderRadius: 2 }}>
-        <TableContainer>
-          <Table stickyHeader aria-label="sticky table">
+        <TableContainer sx={{ maxHeight: { xs: '70vh', md: 'none' } }}>
+          <Table stickyHeader aria-label="sticky table" size={isMobile ? 'small' : 'medium'}>
             <TableHead>
               <TableRow sx={{ '& th': { fontWeight: 'bold', backgroundColor: '#ffffff' } }}>
                 {columns.map((column) => (

@@ -46,12 +46,12 @@ const rows = [
   createData('2025-June', 'Invoice', '2025.02.02', '300 USD', '100 USD'),
   createData('2025-June', 'Invoice', '2025.02.02', '300 USD', '100 USD'),
   createData('2025-June', 'Invoice', '2025.02.02', '300 USD', '100 USD'),
-  createData('2025-June', 'Invoice', '2025.02.02', '300 USD', '100 USD'),
-  createData('2025-June', 'Payment', '2025.02.05', '200 USD', '0 USD'),
-  createData('2025-May', 'Invoice', '2025.01.02', '300 USD', '100 USD'),
-  createData('2025-May', 'Payment', '2025.01.15', '200 USD', '0 USD'),
-  createData('2025-April', 'Invoice', '2025.03.02', '300 USD', '100 USD'),
-  createData('2025-April', 'Payment', '2025.03.20', '200 USD', '0 USD')
+  // createData('2025-June', 'Invoice', '2025.02.02', '300 USD', '100 USD'),
+  // createData('2025-June', 'Payment', '2025.02.05', '200 USD', '0 USD'),
+  // createData('2025-May', 'Invoice', '2025.01.02', '300 USD', '100 USD'),
+  // createData('2025-May', 'Payment', '2025.01.15', '200 USD', '0 USD'),
+  // createData('2025-April', 'Invoice', '2025.03.02', '300 USD', '100 USD'),
+  // createData('2025-April', 'Payment', '2025.03.20', '200 USD', '0 USD')
 ];
 
 export default function Settlements() {

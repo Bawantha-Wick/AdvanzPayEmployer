@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import SideBar from './SideBar';
 import TopBar from './TopBar';
 
 const Layout: React.FC = () => {
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Function to determine the page title based on the current path
   const getPageTitle = () => {
@@ -24,16 +25,33 @@ const Layout: React.FC = () => {
     return titles[path] || 'Dashboard';
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
-    // bg-[#FAF9F6]
-    // <div className="bg-blue-100 flex min-h-screen">
-    <div className="flex" style={{ backgroundColor: '#fffaee' }}>
-      <SideBar />
-      {/* <main className="" style={{ marginLeft: '18rem', width: '100%' }}> */}
-      <div className="flex-1">
-        <TopBar title={getPageTitle()} />
-        {/* <div className="flex bg-red-100" style={{  width: '80vw' , height: '80vh'}}> */}
-        <div className="bg-red-100">
+    <div className="flex min-h-screen" style={{ backgroundColor: '#fffaee' }}>
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div className={`
+        fixed lg:static inset-y-0 left-0 z-50 lg:z-auto
+        transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+        lg:translate-x-0 transition-transform duration-300 ease-in-out
+      `}>
+        <SideBar onClose={() => setSidebarOpen(false)} />
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <TopBar title={getPageTitle()} onMenuClick={toggleSidebar} />
+        <div className="flex-1 overflow-auto">
           <Outlet />
         </div>
       </div>
