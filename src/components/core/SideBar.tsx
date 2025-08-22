@@ -3,14 +3,14 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { MdKeyboardArrowDown, MdKeyboardArrowRight } from 'react-icons/md';
 import { FaRegUser } from 'react-icons/fa';
 import { BsFileEarmarkText } from 'react-icons/bs';
-import { IoHomeOutline, IoAddOutline, IoClose } from 'react-icons/io5';
+import { IoHomeOutline,  IoClose } from 'react-icons/io5';
 import { RiFileListLine } from 'react-icons/ri';
 import { HiOutlineUserGroup } from 'react-icons/hi2';
 import { BiLogOut } from 'react-icons/bi';
 import { IoSettingsOutline } from 'react-icons/io5';
 import innerLogo from '../../assets/inner_logo.png';
 import profileImg from '../../assets/profile.png';
-import { LuUserRoundPlus, LuUserRoundCheck } from 'react-icons/lu';
+import { LuUserRoundPlus } from 'react-icons/lu';
 import { useAuthContext } from '../../contexts/useAuthContext';
 
 interface SideBarProps {
