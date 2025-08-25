@@ -261,7 +261,7 @@ export default function Employees() {
               }
             }}
           >
-            Add new employe
+            Add New Employee
           </Button>
         </Box>
       </Box>
