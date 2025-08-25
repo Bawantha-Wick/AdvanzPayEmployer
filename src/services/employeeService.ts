@@ -1,5 +1,5 @@
 import api from './api';
-import type { Employee, CreateEmployeeData, CreateCorpEmployeeData, UpdateCorpEmployeeData, EmployeeRequest, UpdateRequestStatusData, PaginatedResponse, PaginationParams, Transaction, CorpEmployeesResponse, CorpEmployee, CorpTransaction, CorpTransactionsResponse } from '../types/api';
+import type { Employee, CreateEmployeeData, CreateCorpEmployeeData, UpdateCorpEmployeeData, EmployeeRequest, UpdateRequestStatusData, PaginatedResponse, PaginationParams, Transaction, CorpEmployeesResponse, CorpEmployee, /*CorpTransaction,*/ CorpTransactionsResponse } from '../types/api';
 
 export const employeeService = {
   // Get corporate employees with pagination and search (new API)

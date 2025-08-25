@@ -208,24 +208,24 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
     setIsFormDisabled(true);
   };
 
-  const handleBlock = () => {
-    if (employeeData.status === 'BLCK') {
-      // If currently blocked, unblock (set to active)
-      setEmployeeData({
-        ...employeeData,
-        status: 'ACTV',
-        accountStatus: true
-      });
-    } else {
-      // Set status to blocked but keep form fields enabled
-      setEmployeeData({
-        ...employeeData,
-        status: 'BLCK',
-        accountStatus: false
-      });
-    }
-    // Don't disable form fields for blocked status
-  };
+  // const handleBlock = () => {
+  //   if (employeeData.status === 'BLCK') {
+  //     // If currently blocked, unblock (set to active)
+  //     setEmployeeData({
+  //       ...employeeData,
+  //       status: 'ACTV',
+  //       accountStatus: true
+  //     });
+  //   } else {
+  //     // Set status to blocked but keep form fields enabled
+  //     setEmployeeData({
+  //       ...employeeData,
+  //       status: 'BLCK',
+  //       accountStatus: false
+  //     });
+  //   }
+  //   // Don't disable form fields for blocked status
+  // };
 
   const handleReactivate = () => {
     // Set status back to active and enable form fields

@@ -53,7 +53,7 @@ export default function EmployeeRequests() {
   const [transactions, setTransactions] = React.useState<CorpTransaction[]>([]);
   const [processingId, setProcessingId] = React.useState<number | null>(null);
 
-  const { user } = useAuthContext();
+  // const { user } = useAuthContext();
 
   // Fetch transactions from API
   const fetchTransactions = async (page: number = 1) => {
@@ -106,25 +106,25 @@ export default function EmployeeRequests() {
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'withdrawal':
-        return {
-          bg: '#fcd6d5',
-          text: '#ee3827'
-        };
-      case 'deposit':
-        return {
-          bg: '#ccf1ea',
-          text: '#00b79a'
-        };
-      default:
-        return {
-          bg: '#e8f5fe',
-          text: '#3c92dc'
-        };
-    }
-  };
+  // const getTypeColor = (type: string) => {
+  //   switch (type) {
+  //     case 'withdrawal':
+  //       return {
+  //         bg: '#fcd6d5',
+  //         text: '#ee3827'
+  //       };
+  //     case 'deposit':
+  //       return {
+  //         bg: '#ccf1ea',
+  //         text: '#00b79a'
+  //       };
+  //     default:
+  //       return {
+  //         bg: '#e8f5fe',
+  //         text: '#3c92dc'
+  //       };
+  //   }
+  // };
 
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
