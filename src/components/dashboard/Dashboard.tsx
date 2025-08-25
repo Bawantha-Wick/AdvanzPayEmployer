@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Card, CardContent, Typography, Paper, Alert } from '@mui/material';
-import { ArrowUpward, Inventory, Payments, People, AccountBalanceWallet } from '@mui/icons-material';
+import { Inventory, Payments, People, AccountBalanceWallet } from '@mui/icons-material';
 import dayjs, { Dayjs } from 'dayjs';
 
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Area } from 'recharts';
@@ -19,7 +19,7 @@ const Dashboard: React.FC = () => {
   const startDate = currentDate.subtract(30, 'day');
   const endDate = currentDate;
 
-  // Validation function to ensure from date is always less than to date
+  // Validation function to ensure from date is always less than to date and within 2 months
   const validateDateRange = (start: Dayjs, end: Dayjs) => {
     if (start.isAfter(end) || start.isSame(end)) {
       return {
@@ -27,6 +27,18 @@ const Dashboard: React.FC = () => {
         end: start.add(1, 'day')
       };
     }
+
+    // Check if range exceeds 2 months (60 days)
+    const maxDays = 60;
+    const daysDifference = end.diff(start, 'day');
+
+    if (daysDifference > maxDays) {
+      return {
+        start: start,
+        end: start.add(maxDays, 'day')
+      };
+    }
+
     return { start, end };
   };
 
@@ -75,7 +87,16 @@ const Dashboard: React.FC = () => {
         // If same date, add one day to end
         setTempEndDate(date.add(1, 'day'));
       } else {
-        setTempEndDate(date);
+        // Check if the selected end date would create a range longer than 2 months
+        const daysDifference = date.diff(tempStartDate, 'day');
+        const maxDays = 60; // Approximately 2 months
+
+        if (daysDifference > maxDays) {
+          // If range is too long, set end date to exactly 2 months from start
+          setTempEndDate(tempStartDate.add(maxDays, 'day'));
+        } else {
+          setTempEndDate(date);
+        }
       }
       setSelectionMode('start'); // Reset for next selection
     }
@@ -193,7 +214,7 @@ const Dashboard: React.FC = () => {
                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
                   {selectionMode === 'start' ? 'Select Start Date' : 'Select End Date'}
                 </Typography>
-                <Typography variant="caption">{selectionMode === 'start' ? 'Choose the beginning of your date range' : `Start: ${tempStartDate.format('MMM DD, YYYY')} - Now pick end date`}</Typography>
+                <Typography variant="caption">{selectionMode === 'start' ? 'Choose the beginning of your date range (max 31 days)' : `Start: ${tempStartDate.format('MMM DD, YYYY')} - Pick end date (max 2 months from start)`}</Typography>
               </Box>
 
               {/* Calendar Grid */}
@@ -259,6 +280,10 @@ const Dashboard: React.FC = () => {
                       const isEnd = isEndDate(date);
                       const inRange = isDateInRange(date) && !isStart && !isEnd;
 
+                      // Check if date is beyond 2 months limit when selecting end date
+                      const maxDays = 31; // Approximately 2 months
+                      const isDisabled = selectionMode === 'end' && date.diff(tempStartDate, 'day') > maxDays && !isStart && !isEnd;
+
                       return (
                         <Box
                           key={date.format('YYYY-MM-DD')}
@@ -267,20 +292,22 @@ const Dashboard: React.FC = () => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            cursor: isCurrentMonth ? 'pointer' : 'default',
+                            cursor: isCurrentMonth && !isDisabled ? 'pointer' : 'default',
                             borderRadius: '50%',
                             fontSize: '14px',
                             fontWeight: isToday ? 'bold' : 'normal',
-                            color: !isCurrentMonth ? '#ccc' : isStart || isEnd ? 'white' : '#333',
+                            color: !isCurrentMonth || isDisabled ? '#ccc' : isStart || isEnd ? 'white' : '#333',
                             backgroundColor: isStart ? '#ff6b00' : isEnd ? '#ff8c40' : inRange ? 'rgba(255, 107, 0, 0.1)' : 'transparent',
-                            border: isToday && !isStart && !isEnd ? '2px solid #ff6b00' : 'none',
-                            '&:hover': isCurrentMonth
-                              ? {
-                                  backgroundColor: isStart ? '#ff6b00' : isEnd ? '#ff8c40' : 'rgba(255, 107, 0, 0.2)'
-                                }
-                              : {}
+                            border: isToday && !isStart && !isEnd && !isDisabled ? '2px solid #ff6b00' : 'none',
+                            opacity: isDisabled ? 0.3 : 1,
+                            '&:hover':
+                              isCurrentMonth && !isDisabled
+                                ? {
+                                    backgroundColor: isStart ? '#ff6b00' : isEnd ? '#ff8c40' : 'rgba(255, 107, 0, 0.2)'
+                                  }
+                                : {}
                           }}
-                          onClick={() => isCurrentMonth && handleDateClick(date)}
+                          onClick={() => isCurrentMonth && !isDisabled && handleDateClick(date)}
                         >
                           {date.format('D')}
                         </Box>
