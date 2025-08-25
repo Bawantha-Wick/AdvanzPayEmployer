@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography';
 import { InputAdornment, TextField, Dialog, DialogTitle, DialogContent, DialogActions, useTheme, useMediaQuery, CircularProgress } from '@mui/material';
 import { IoMdSearch } from 'react-icons/io';
 import { employeeService } from '../../services/employeeService';
-import { useAuthContext } from '../../contexts/useAuthContext';
+// import { useAuthContext } from '../../contexts/useAuthContext';
 import type { CorpTransaction, CorpTransactionsResponse } from '../../types/api';
 
 interface Column {
