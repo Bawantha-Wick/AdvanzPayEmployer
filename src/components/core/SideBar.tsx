@@ -9,9 +9,9 @@ import { HiOutlineUserGroup } from 'react-icons/hi2';
 import { BiLogOut } from 'react-icons/bi';
 import { IoSettingsOutline } from 'react-icons/io5';
 import innerLogo from '../../assets/inner_logo.png';
-import profileImg from '../../assets/profile.png';
 import { LuUserRoundPlus } from 'react-icons/lu';
 import { useAuthContext } from '../../contexts/useAuthContext';
+import ProfileIcon from '../common/ProfileIcon';
 
 interface SideBarProps {
   onClose?: () => void;
@@ -96,7 +96,7 @@ const SideBar: React.FC<SideBarProps> = ({ onClose }) => {
           <button onClick={() => toggleMenu('employeeManagement')} className="w-full flex items-center justify-between text-white hover:bg-[#DC7356] transition-colors">
             <div className="flex items-center">
               <HiOutlineUserGroup className="text-xl" style={iconStyles} />
-              <span>Employee Management</span>
+              <span className={isActiveRoute('/app/employees') || isActiveRoute('/app/employee-requests') ? 'font-bold' : ''}>Employee Management</span>
             </div>
             {expandedMenus.includes('employeeManagement') ? <MdKeyboardArrowDown className="text-xl" style={expandIconStyles} /> : <MdKeyboardArrowRight className="text-xl" style={expandIconStyles} />}
           </button>
@@ -150,8 +150,8 @@ const SideBar: React.FC<SideBarProps> = ({ onClose }) => {
         <div style={menuItemStyles}>
           <button onClick={() => toggleMenu('settings')} className="w-full flex items-center justify-between text-white hover:bg-[#DC7356] transition-colors">
             <div className="flex items-center">
-              <IoSettingsOutline className="text-xl" style={iconStyles} />
-              <span>Settings</span>
+              <IoSettingsOutline className={'text-xl'} style={iconStyles} />
+              <span className={isActiveRoute('/app/users') || isActiveRoute('/app/user-roles') ? 'font-bold' : ''}>Org Settings</span>
             </div>
             {expandedMenus.includes('settings') ? <MdKeyboardArrowDown className="text-xl" style={expandIconStyles} /> : <MdKeyboardArrowRight className="text-xl" style={expandIconStyles} />}
           </button>
@@ -177,7 +177,7 @@ const SideBar: React.FC<SideBarProps> = ({ onClose }) => {
       {/* User Profile */}
       <div className="mt-auto border-t border-[#DC7356] bg-[#e08368]" style={{ marginBottom: '2rem', marginLeft: '2rem', marginRight: '2rem' }}>
         <button onClick={() => toggleMenu('profile')} className="w-full flex justify-center hover:bg-[#DC7356] transition-colors gap-5" style={{ marginTop: '1.25rem', paddingBottom: '1.25rem' }}>
-          <img src={profileImg} alt="Profile" className="w-10 h-10 rounded" />
+          <ProfileIcon name={user?.name || 'User'} size="md" />
           <div className="text-center">
             <div className="font-medium">{user?.name || 'User'}</div>
             <div className="text-sm opacity-75">{user?.role || 'Admin'}</div>

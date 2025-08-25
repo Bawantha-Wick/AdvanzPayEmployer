@@ -271,7 +271,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
       <DialogTitle sx={{ p: 0, mb: 3 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" fontWeight="medium">
-            {mode === 'add' ? 'Add new employee' : 'Edit Employee'}
+            {mode === 'add' ? 'Add New Employee' : 'Edit Employee'}
           </Typography>
           <IconButton onClick={onClose} size="small">
             <CloseIcon />
@@ -297,7 +297,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
                   </Typography>
                   <TextField
                     fullWidth
-                    placeholder="Enter employee id"
+                    placeholder="1001"
                     value={employeeData.id}
                     onChange={(e) => handleChange('id', e.target.value)}
                     disabled={isFormDisabled}
@@ -324,7 +324,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
                   </Typography>
                   <TextField
                     fullWidth
-                    placeholder="Enter name"
+                    placeholder="John Doe"
                     value={employeeData.name}
                     onChange={(e) => handleChange('name', e.target.value)}
                     disabled={isFormDisabled}
@@ -353,7 +353,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
                   </Typography>
                   <TextField
                     fullWidth
-                    placeholder="Enter email"
+                    placeholder="john@abc.com"
                     type="email"
                     value={employeeData.email}
                     onChange={(e) => handleChange('email', e.target.value)}
@@ -378,11 +378,11 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
                 {/* Third row */}
                 <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
-                    Mobile number
+                    Mobile Number
                   </Typography>
                   <TextField
                     fullWidth
-                    placeholder="Enter mobile number"
+                    placeholder="+16102441494"
                     value={employeeData.mobile}
                     onChange={(e) => handleChange('mobile', e.target.value)}
                     disabled={isFormDisabled}
@@ -405,11 +405,11 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
                 </Grid>
                 <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
-                    Basic salary (USD)
+                    Basic Salary (USD)
                   </Typography>
                   <TextField
                     fullWidth
-                    placeholder="Enter salary"
+                    placeholder="5000"
                     value={employeeData.salary}
                     onChange={(e) => handleChange('salary', e.target.value)}
                     disabled={isFormDisabled}
@@ -498,7 +498,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
               <Grid container spacing={3}>
                 <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
-                    Account name
+                    Account Name
                   </Typography>
                   <TextField
                     fullWidth
@@ -525,11 +525,11 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
                 </Grid>
                 <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
-                    Account number
+                    Account Number
                   </Typography>
                   <TextField
                     fullWidth
-                    placeholder="52898656"
+                    placeholder="1234567890123456"
                     value={employeeData.bankDetails.accountNumber}
                     onChange={(e) => handleBankDetailsChange('accountNumber', e.target.value)}
                     disabled={isFormDisabled}
@@ -552,11 +552,11 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
                 </Grid>
                 <Grid /*xs={12} md={6}*/ size={6}>
                   <Typography variant="subtitle1" fontWeight="medium" mb={1}>
-                    Bank name
+                    Bank Name
                   </Typography>
                   <TextField
                     fullWidth
-                    placeholder="Westpac"
+                    placeholder="Bank of America"
                     value={employeeData.bankDetails.bankName}
                     onChange={(e) => handleBankDetailsChange('bankName', e.target.value)}
                     disabled={isFormDisabled}
@@ -578,7 +578,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
                   />
                 </Grid>
                 <Grid /*xs={12} md={6}*/ size={6}>
-                  <Typography variant="subtitle1" fontWeight="medium" mb={1}>
+                  {/* <Typography variant="subtitle1" fontWeight="medium" mb={1}>
                     Branch
                   </Typography>
                   <TextField
@@ -602,7 +602,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
                         }
                       }
                     }}
-                  />
+                  /> */}
                 </Grid>
               </Grid>
             </Box>

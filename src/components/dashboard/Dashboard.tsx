@@ -354,7 +354,7 @@ const Dashboard: React.FC = () => {
       >
         {/* Withdrawal Requests Card */}
         <Box>
-          <Card sx={{ bgcolor: '#e8d7cd', borderRadius: '40px', position: 'relative', height: '11.5rem' }}>
+          <Card sx={{ bgcolor: '#e8d7cd', borderRadius: '40px', position: 'relative', height: '9rem' }}>
             <CardContent>
               <Typography variant="subtitle1" sx={{ color: '#666' }}>
                 Withdrawal requests
@@ -362,12 +362,12 @@ const Dashboard: React.FC = () => {
               <Typography variant="h3" sx={{ my: 2, fontWeight: 'bold' }}>
                 {analytics?.withdrawalRequestCount || 0}
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {/* <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <ArrowUpward sx={{ color: '#4CAF50', fontSize: 16, mr: 0.5 }} />
                 <Typography variant="caption" sx={{ color: '#666' }}>
                   From today data
                 </Typography>
-              </Box>
+              </Box> */}
               <Box
                 sx={{
                   position: 'absolute',
@@ -390,7 +390,7 @@ const Dashboard: React.FC = () => {
 
         {/* Total Withdrawal Amount Card */}
         <Box>
-          <Card sx={{ bgcolor: '#fff', borderRadius: '40px', position: 'relative', height: '11.5rem' }}>
+          <Card sx={{ bgcolor: '#fff', borderRadius: '40px', position: 'relative', height: '9rem' }}>
             <CardContent>
               <Typography variant="subtitle1" sx={{ color: '#666' }}>
                 Total Withdrawal amount
@@ -398,12 +398,12 @@ const Dashboard: React.FC = () => {
               <Typography variant="h3" sx={{ my: 2, fontWeight: 'bold' }}>
                 {analytics?.totalWithdrawalAmount || 0} USD
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {/* <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <ArrowUpward sx={{ color: '#4CAF50', fontSize: 16, mr: 0.5 }} />
                 <Typography variant="caption" sx={{ color: '#666' }}>
                   From today data
                 </Typography>
-              </Box>
+              </Box> */}
               <Box
                 sx={{
                   position: 'absolute',
@@ -426,7 +426,7 @@ const Dashboard: React.FC = () => {
 
         {/* Employees Card */}
         <Box>
-          <Card sx={{ bgcolor: '#e8d7cd', borderRadius: '40px', position: 'relative', height: '11.5rem' }}>
+          <Card sx={{ bgcolor: '#e8d7cd', borderRadius: '40px', position: 'relative', height: '9rem' }}>
             <CardContent>
               <Typography variant="subtitle1" sx={{ color: '#666' }}>
                 Employees
@@ -434,12 +434,12 @@ const Dashboard: React.FC = () => {
               <Typography variant="h3" sx={{ my: 2, fontWeight: 'bold' }}>
                 {analytics?.employeeCount || 0}
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {/* <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <ArrowUpward sx={{ color: '#4CAF50', fontSize: 16, mr: 0.5 }} />
                 <Typography variant="caption" sx={{ color: '#666' }}>
                   From today data
                 </Typography>
-              </Box>
+              </Box> */}
               <Box
                 sx={{
                   position: 'absolute',
@@ -462,7 +462,7 @@ const Dashboard: React.FC = () => {
 
         {/* Liability Card */}
         <Box>
-          <Card sx={{ bgcolor: '#fff', borderRadius: '40px', position: 'relative', height: '11.5rem' }}>
+          <Card sx={{ bgcolor: '#fff', borderRadius: '40px', position: 'relative', height: '9rem' }}>
             <CardContent>
               <Typography variant="subtitle1" sx={{ color: '#666' }}>
                 Total Liability
@@ -470,12 +470,12 @@ const Dashboard: React.FC = () => {
               <Typography variant="h3" sx={{ my: 2, fontWeight: 'bold' }}>
                 {analytics?.totalLiability || 0} USD
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {/* <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <ArrowUpward sx={{ color: '#4CAF50', fontSize: 16, mr: 0.5 }} />
                 <Typography variant="caption" sx={{ color: '#666' }}>
                   From today data
                 </Typography>
-              </Box>
+              </Box> */}
               <Box
                 sx={{
                   position: 'absolute',

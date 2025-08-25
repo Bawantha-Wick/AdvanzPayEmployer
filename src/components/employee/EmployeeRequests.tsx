@@ -29,7 +29,7 @@ const columns: readonly Column[] = [
   { id: 'date', label: 'DATE', minWidth: 120 },
   { id: 'amount', label: 'AMOUNT', minWidth: 120 },
   { id: 'status', label: 'STATUS', minWidth: 120 },
-  { id: 'actions', label: 'ACTIONS', minWidth: 200 }
+  { id: 'actions', label: 'ACTIONS', minWidth: 120 }
 ];
 
 export default function EmployeeRequests() {
@@ -127,10 +127,11 @@ export default function EmployeeRequests() {
   // };
 
   const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+    return `${amount} USD`;
+    // return new Intl.NumberFormat('en-US', {
+    //   style: 'currency',
+    //   currency: 'USD'
+    // }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
@@ -421,7 +422,7 @@ export default function EmployeeRequests() {
                     <TableCell align="left">
                       <Box
                         sx={{
-                          color: transaction.type === 'withdrawal' ? '#ee3827' : '#00b79a',
+                          color: transaction.status === 'cancelled' ? '#ee3827' : '#00b79a',
                           fontWeight: 'bold'
                         }}
                       >
@@ -497,7 +498,21 @@ export default function EmployeeRequests() {
                       )}
                       {transaction.status !== 'pending' && (
                         <Typography variant="body2" color="textSecondary">
-                          {transaction.status === 'completed' ? 'Approved' : 'Rejected'}
+                          {/* {transaction.status === 'completed' ? 'Approved' : 'Rejected'} */}
+                          <Box
+                            sx={{
+                              backgroundColor: '#dbeafe',
+                              color: '#1e40af',
+                              display: 'inline-block',
+                              px: 2,
+                              py: 0.5,
+                              borderRadius: 1,
+                              width: '100px',
+                              textAlign: 'center'
+                            }}
+                          >
+                            <Typography variant="body2">MARKED</Typography>
+                          </Box>
                         </Typography>
                       )}
                     </TableCell>

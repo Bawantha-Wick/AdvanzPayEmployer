@@ -254,6 +254,7 @@ export interface LoginUser {
   mobile: string;
   accessToken: string;
   refreshToken: string;
+  corpName: string;
 }
 
 export interface LoginApiResponse {
@@ -291,6 +292,34 @@ export interface Settlement {
   status: 'Pending' | 'Completed' | 'Failed';
   transactionId?: string;
   paymentMethod: string;
+}
+
+export interface MonthlyLiability {
+  billingMonth: string;
+  type: string;
+  lastDate: string;
+  totalLiability: number;
+  balance: number;
+}
+
+export interface AnalyticsData {
+  employeeCount: number;
+  totalWithdrawalAmount: number;
+  withdrawalRequestCount: number;
+  totalLiability: number;
+  dailyWithdrawals: Array<{
+    date: string;
+    amount: number;
+  }>;
+  monthlyLiabilities: MonthlyLiability[];
+}
+
+export interface AnalyticsResponse {
+  statusCode: number;
+  status: boolean;
+  responseCode: string;
+  message: string;
+  data: AnalyticsData;
 }
 
 // Transaction interfaces

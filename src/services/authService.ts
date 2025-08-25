@@ -17,6 +17,7 @@ export const authService = {
         name: data.username,
         email: data.email,
         role: data.title,
+        corpName: data.corpName,
         isActive: true,
         createdAt: new Date().toISOString()
       })

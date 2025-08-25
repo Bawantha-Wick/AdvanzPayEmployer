@@ -43,15 +43,16 @@ interface ExcelPreviewProps {
   data: ExcelEmployeeData[];
   fileName: string;
   onBack: () => void;
-  onSubmit: (data: ExcelEmployeeData[]) => void;
+  onSubmit: (data: ExcelEmployeeData[], onError: (error: string) => void) => void;
+  isSubmitting?: boolean;
 }
 
-const ExcelPreview: React.FC<ExcelPreviewProps> = ({ data, fileName, onBack, onSubmit }) => {
+const ExcelPreview: React.FC<ExcelPreviewProps> = ({ data, fileName, onBack, onSubmit, isSubmitting = false }) => {
   const [employees, setEmployees] = React.useState<ExcelEmployeeData[]>(data);
   const [editingCell, setEditingCell] = React.useState<{ rowIndex: number; field: keyof ExcelEmployeeData } | null>(null);
   const [tempValue, setTempValue] = React.useState<string>('');
   const [validationErrors, setValidationErrors] = React.useState<ValidationError[]>([]);
-  const [loading, setLoading] = React.useState(false);
+  const [apiError, setApiError] = React.useState<string>('');
 
   const validateData = React.useCallback(() => {
     const errors: ValidationError[] = [];
@@ -134,13 +135,10 @@ const ExcelPreview: React.FC<ExcelPreviewProps> = ({ data, fileName, onBack, onS
       return;
     }
 
-    setLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate processing
-      onSubmit(employees);
-    } finally {
-      setLoading(false);
-    }
+    setApiError(''); // Clear any previous API errors
+    onSubmit(employees, (error: string) => {
+      setApiError(error);
+    });
   };
 
   const getFieldError = (rowIndex: number, field: string) => {
@@ -247,7 +245,7 @@ const ExcelPreview: React.FC<ExcelPreviewProps> = ({ data, fileName, onBack, onS
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={loading || validationErrors.length > 0}
+          disabled={isSubmitting || validationErrors.length > 0}
           sx={{
             borderRadius: '8px',
             backgroundColor: '#e07a64',
@@ -259,9 +257,19 @@ const ExcelPreview: React.FC<ExcelPreviewProps> = ({ data, fileName, onBack, onS
             }
           }}
         >
-          {loading ? 'Submitting...' : 'Submit Data'}
+          {isSubmitting ? 'Submitting...' : 'Submit Data'}
         </Button>
       </Box>
+
+      {/* API Error */}
+      {apiError && (
+        <Alert severity="error" sx={{ mb: 1 }} icon={<MdErrorOutline />}>
+          <Typography variant="body2" fontWeight="medium" sx={{ mb: 1 }}>
+            Please review each record and ensure the Employee ID, Email, and Mobile Number are unique and correctly formatted, then re-upload{' '}
+          </Typography>
+          {/* <Typography variant="body2">{apiError}</Typography> */}
+        </Alert>
+      )}
 
       {/* Validation Summary */}
       {validationErrors.length > 0 && (

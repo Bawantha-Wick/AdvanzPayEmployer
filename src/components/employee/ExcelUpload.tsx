@@ -190,7 +190,7 @@ const ExcelUpload: React.FC<ExcelUploadProps> = ({ open, onClose, onSuccess }) =
     setError('');
   };
 
-  const handleSubmitData = async (finalData: ExcelEmployeeData[]) => {
+  const handleSubmitData = async (finalData: ExcelEmployeeData[], onError: (error: string) => void) => {
     setLoading(true);
     setError('');
     setUploadProgress(0);
@@ -238,9 +238,11 @@ const ExcelUpload: React.FC<ExcelUploadProps> = ({ open, onClose, onSuccess }) =
         }, 2000);
       }, 500);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to upload data. Please try again.');
+      clearInterval(200);
       setLoading(false);
       setUploadProgress(0);
+      // Pass error to preview component instead of showing it here
+      onError(error instanceof Error ? error.message : 'Failed to upload data. Please try again.');
     }
   };
 
@@ -271,7 +273,8 @@ const ExcelUpload: React.FC<ExcelUploadProps> = ({ open, onClose, onSuccess }) =
         sx: {
           borderRadius: '10px',
           p: 3,
-          minHeight: '400px'
+          minHeight: '400px',
+          minWidth: '90%'
         }
       }}
     >
@@ -468,7 +471,7 @@ const ExcelUpload: React.FC<ExcelUploadProps> = ({ open, onClose, onSuccess }) =
           </Box>
         ) : (
           // Preview Step
-          <ExcelPreview data={parsedData} fileName={uploadedFile?.name || 'Unknown'} onBack={handleBackToUpload} onSubmit={handleSubmitData} />
+          <ExcelPreview data={parsedData} fileName={uploadedFile?.name || 'Unknown'} onBack={handleBackToUpload} onSubmit={handleSubmitData} isSubmitting={loading} />
         )}
       </DialogContent>
     </Dialog>

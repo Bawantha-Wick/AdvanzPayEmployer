@@ -26,14 +26,6 @@ const TopBar: React.FC<TopBarProps> = ({ title = 'Dashboard', notificationCount 
 
       <div className="flex-grow"></div>
 
-      {/* User greeting */}
-      {user && (
-        <div className="hidden lg:flex items-center mr-4">
-          <span className="text-sm text-gray-600 mr-2">Welcome,</span>
-          <span className="text-sm font-medium text-gray-800">{user.name}</span>
-        </div>
-      )}
-
       <Stack direction="row" sx={{ marginRight: '1.5rem', color: 'action.active' }}>
         <div className="relative inline-flex items-center justify-center w-10 h-10 rounded-full bg-red-500">
           <NotificationsNoneOutlinedIcon sx={{ fontSize: 28, color: 'white' }} />
