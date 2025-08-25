@@ -84,7 +84,7 @@ export interface EmployeeRequest {
   date: string;
   amount: string;
   type: 'withdrawal' | 'deposit' | 'advance' | 'salary';
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'completed' | 'cancelled';
   verified: 'true' | 'false';
   employeeId?: string;
   employeeName?: string;
@@ -303,6 +303,50 @@ export interface Transaction {
   date: string;
   status: 'Pending' | 'Completed' | 'Failed';
   description?: string;
+}
+
+// Corporate Transaction interfaces
+export interface CorpTransaction {
+  id: number;
+  title: string;
+  description: string | null;
+  amount: number;
+  type: 'withdrawal' | 'deposit';
+  status: 'pending' | 'completed' | 'cancelled';
+  verified: boolean;
+  referenceNumber: string;
+  notes: string | null;
+  employee: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  bankAccount: {
+    id: number;
+    accountNumber: string;
+    holderName: string;
+    bankName: string;
+    branch: string;
+  };
+  goal: any | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CorpTransactionsResponse {
+  statusCode: number;
+  status: boolean;
+  responseCode: string;
+  message: string;
+  data: {
+    data: CorpTransaction[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  };
 }
 
 // API Response wrapper

@@ -19,7 +19,9 @@ const Layout: React.FC = () => {
       employees: 'Employee Management',
       'employee-requests': 'Employee Requests',
       'authorize-employees': 'Authorize Employees',
-      settlements: 'Settlements'
+      settlements: 'Settlements',
+      reports: 'Reports',
+      'reports-coming-soon': 'Reports'
     };
 
     return titles[path] || 'Dashboard';
@@ -32,19 +34,16 @@ const Layout: React.FC = () => {
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: '#fffaee' }}>
       {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      
+      {sidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+
       {/* Sidebar */}
-      <div className={`
+      <div
+        className={`
         fixed lg:static inset-y-0 left-0 z-50 lg:z-auto
         transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
         lg:translate-x-0 transition-transform duration-300 ease-in-out
-      `}>
+      `}
+      >
         <SideBar onClose={() => setSidebarOpen(false)} />
       </div>
 

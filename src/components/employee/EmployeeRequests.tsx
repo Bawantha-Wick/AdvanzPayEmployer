@@ -9,93 +9,86 @@ import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { InputAdornment, TextField, Dialog, DialogTitle, DialogContent, DialogActions, useTheme, useMediaQuery } from '@mui/material';
+import { InputAdornment, TextField, Dialog, DialogTitle, DialogContent, DialogActions, useTheme, useMediaQuery, CircularProgress } from '@mui/material';
 import { IoMdSearch } from 'react-icons/io';
 import { employeeService } from '../../services/employeeService';
 import { useAuthContext } from '../../contexts/useAuthContext';
+import type { CorpTransaction, CorpTransactionsResponse } from '../../types/api';
 
 interface Column {
-  id: 'id' | 'title' | 'date' | 'amount' | 'type' | 'status' | 'verified' | 'actions';
+  id: 'id' | 'employee' | 'title' | 'date' | 'amount' | 'status' | 'actions';
   label: string;
   minWidth?: number;
   align?: 'center' | 'right';
 }
 
 const columns: readonly Column[] = [
-  { id: 'id', label: 'REQUEST ID', minWidth: 120 },
+  { id: 'id', label: 'REQUEST ID', minWidth: 100 },
+  { id: 'employee', label: 'EMPLOYEE', minWidth: 150 },
   { id: 'title', label: 'TITLE', minWidth: 150 },
   { id: 'date', label: 'DATE', minWidth: 120 },
-  { id: 'amount', label: 'AMOUNT', minWidth: 120, align: 'right' },
-  { id: 'type', label: 'TYPE', minWidth: 120 },
+  { id: 'amount', label: 'AMOUNT', minWidth: 120 },
   { id: 'status', label: 'STATUS', minWidth: 120 },
-  { id: 'verified', label: 'VERIFIED', minWidth: 100 },
   { id: 'actions', label: 'ACTIONS', minWidth: 200 }
-];
-
-interface RequestData {
-  id: string;
-  title: string;
-  date: string;
-  amount: string;
-  type: 'withdrawal' | 'deposit' | 'advance' | 'salary';
-  status: 'pending' | 'approved' | 'rejected';
-  verified: 'true' | 'false';
-}
-
-function createData(id: string, title: string, date: string, amount: string, type: 'withdrawal' | 'deposit' | 'advance' | 'salary', status: 'pending' | 'approved' | 'rejected', verified: 'true' | 'false'): RequestData {
-  return {
-    id,
-    title,
-    date,
-    amount,
-    type,
-    status,
-    verified
-  };
-}
-
-const rows = [
-  createData('1', 'salary_advance', '2025-08-10', '+500.00', 'advance', 'approved', 'true'),
-  createData('2', 'medical_allowance', '2025-08-11', '+200.00', 'advance', 'approved', 'true'),
-  createData('3', 'house_deposit', '2025-08-11', '+100.00', 'withdrawal', 'pending', 'false'),
-  createData('4', 'emergency_fund', '2025-08-12', '+300.00', 'advance', 'pending', 'false'),
-  createData('5', 'salary_payment', '2025-08-12', '+1500.00', 'salary', 'approved', 'true'),
-  createData('6', 'travel_allowance', '2025-08-09', '+150.00', 'advance', 'rejected', 'false'),
-  // createData('7', 'bonus_payment', '2025-08-08', '+800.00', 'advance', 'pending', 'false'),
-  // createData('8', 'overtime_pay', '2025-08-07', '+250.00', 'advance', 'approved', 'true')
 ];
 
 export default function EmployeeRequests() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage] = React.useState(9);
+
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
+  const [totalTransactions, setTotalTransactions] = React.useState(0);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [filterStatus, setFilterStatus] = React.useState<string>('All');
   const [approvalDialog, setApprovalDialog] = React.useState<{
     open: boolean;
-    requestId: string;
+    requestId: number;
     action: 'approve' | 'reject';
-  }>({ open: false, requestId: '', action: 'approve' });
+  }>({ open: false, requestId: 0, action: 'approve' });
   const [remark, setRemark] = React.useState('');
   const [loading, setLoading] = React.useState(false);
-  const [requests, setRequests] = React.useState(rows); // Use state for dynamic updates
+  const [initialLoading, setInitialLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [transactions, setTransactions] = React.useState<CorpTransaction[]>([]);
+  const [processingId, setProcessingId] = React.useState<number | null>(null);
 
   const { user } = useAuthContext();
 
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
+  // Fetch transactions from API
+  const fetchTransactions = async (page: number = 1) => {
+    try {
+      setInitialLoading(true);
+      const response: CorpTransactionsResponse = await employeeService.getCorpTransactions(page, 10);
+      setTransactions(response.data.data);
+      setTotalPages(response.data.pagination.totalPages);
+      setTotalTransactions(response.data.pagination.total);
+      setCurrentPage(page);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch employee requests');
+      console.error('Error fetching transactions:', err);
+    } finally {
+      setInitialLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  const handleChangePage = (newPage: number) => {
+    fetchTransactions(newPage);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved':
+      case 'completed':
         return {
           bg: '#ccf1ea',
           text: '#00b79a'
         };
-      case 'rejected':
+      case 'cancelled':
         return {
           bg: '#fcd6d5',
           text: '#ee3827'
@@ -117,24 +110,14 @@ export default function EmployeeRequests() {
     switch (type) {
       case 'withdrawal':
         return {
+          bg: '#fcd6d5',
+          text: '#ee3827'
+        };
+      case 'deposit':
+        return {
           bg: '#ccf1ea',
           text: '#00b79a'
         };
-      // case 'deposit':
-      //   return {
-      //     bg: '#ccf1ea',
-      //     text: '#00b79a'
-      //   };
-      // case 'advance':
-      //   return {
-      //     bg: '#e8f5fe',
-      //     text: '#3c92dc'
-      //   };
-      // case 'salary':
-      //   return {
-      //     bg: '#f3e5f5',
-      //     text: '#8e24aa'
-      //   };
       default:
         return {
           bg: '#e8f5fe',
@@ -143,21 +126,36 @@ export default function EmployeeRequests() {
     }
   };
 
-  const filteredRows = React.useMemo(() => {
-    return requests.filter((row) => {
-      const matchesSearch = searchTerm === '' || Object.values(row).some((value) => String(value).toLowerCase().includes(searchTerm.toLowerCase()));
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
 
-      const matchesFilter = filterStatus === 'All' || row.status === filterStatus.toLowerCase();
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const filteredTransactions = React.useMemo(() => {
+    return transactions.filter((transaction) => {
+      const matchesSearch = searchTerm === '' || transaction.title.toLowerCase().includes(searchTerm.toLowerCase()) || transaction.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) || transaction.employee.email.toLowerCase().includes(searchTerm.toLowerCase()) || transaction.referenceNumber.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesFilter = filterStatus === 'All' || (filterStatus === 'Completed' && transaction.status === 'completed') || (filterStatus === 'Cancelled' && transaction.status === 'cancelled') || (filterStatus === 'Pending' && transaction.status === 'pending');
 
       return matchesSearch && matchesFilter;
     });
-  }, [searchTerm, filterStatus, requests]);
+  }, [searchTerm, filterStatus, transactions]);
 
   const handleFilterClick = (status: string) => {
     setFilterStatus(status);
   };
 
-  const handleApprovalAction = (requestId: string, action: 'approve' | 'reject') => {
+  const handleApprovalAction = (requestId: number, action: 'approve' | 'reject') => {
     setApprovalDialog({ open: true, requestId, action });
     setRemark('');
   };
@@ -169,55 +167,116 @@ export default function EmployeeRequests() {
     }
 
     setLoading(true);
+    setProcessingId(approvalDialog.requestId);
     try {
-      const processedBy = user?.name || 'Current User';
+      await employeeService.updateTransactionStatus(approvalDialog.requestId, approvalDialog.action, remark);
 
-      if (approvalDialog.action === 'approve') {
-        await employeeService.approveRequestWithRemark(approvalDialog.requestId, processedBy, remark);
-      } else {
-        await employeeService.rejectRequestWithRemark(approvalDialog.requestId, processedBy, remark);
-      }
+      // Refresh the current page data
+      await fetchTransactions(currentPage);
 
-      // Update local state
-      setRequests((prev) =>
-        prev.map((row) =>
-          row.id === approvalDialog.requestId
-            ? {
-                ...row,
-                status: approvalDialog.action === 'approve' ? ('approved' as const) : ('rejected' as const),
-                verified: approvalDialog.action === 'approve' ? ('true' as const) : ('false' as const)
-              }
-            : row
-        )
-      );
-
-      setApprovalDialog({ open: false, requestId: '', action: 'approve' });
+      setApprovalDialog({ open: false, requestId: 0, action: 'approve' });
       setRemark('');
     } catch (error) {
       console.error('Error updating request status:', error);
       alert('Failed to update request status. Please try again.');
     } finally {
       setLoading(false);
+      setProcessingId(null);
     }
   };
 
   const handleApprovalCancel = () => {
-    setApprovalDialog({ open: false, requestId: '', action: 'approve' });
+    setApprovalDialog({ open: false, requestId: 0, action: 'approve' });
     setRemark('');
   };
 
+  if (initialLoading) {
+    return (
+      <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: { xs: 2, md: 3 }, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: { xs: 2, md: 3 } }}>
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="h6" color="error" gutterBottom>
+            {error}
+          </Typography>
+          <Button variant="contained" onClick={() => fetchTransactions(currentPage)} sx={{ mt: 2 }}>
+            Try Again
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: { xs: 2, md: 3 } }}>
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', lg: 'row' },
-        justifyContent: 'space-between', 
-        alignItems: { xs: 'stretch', lg: 'center' }, 
-        mb: 2,
-        gap: { xs: 2, lg: 0 }
-      }}>
+      {/* <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2, mb: 3 }}> */}
+      {/* <Paper sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: '#e3f2fd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="h6" color="primary">
+              📋
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" color="textSecondary">
+              Total Requests
+            </Typography>
+            <Typography variant="h6" fontWeight="bold">
+              {totalTransactions}
+            </Typography>
+          </Box>
+        </Paper> */}
+
+      {/* <Paper sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: '#fff3e0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="h6" color="warning.main">
+              ⏳
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" color="textSecondary">
+              Pending
+            </Typography>
+            <Typography variant="h6" fontWeight="bold">
+              {transactions.filter((t) => t.status === 'pending').length}
+            </Typography>
+          </Box>
+        </Paper> */}
+
+      {/* <Paper sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: '#e8f5e8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="h6" color="success.main">
+              ✅
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" color="textSecondary">
+              Approved
+            </Typography>
+            <Typography variant="h6" fontWeight="bold">
+              {transactions.filter((t) => t.status === 'approved').length}
+            </Typography>
+          </Box>
+        </Paper> */}
+      {/* </Box> */}
+
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', lg: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'stretch', lg: 'center' },
+          mb: 2,
+          gap: { xs: 2, lg: 0 }
+        }}
+      >
         <TextField
-          placeholder="Search mail"
+          placeholder="Search requests..."
           size="small"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -228,22 +287,26 @@ export default function EmployeeRequests() {
               backgroundColor: '#ffffff'
             }
           }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <IoMdSearch />
-              </InputAdornment>
-            )
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <IoMdSearch />
+                </InputAdornment>
+              )
+            }
           }}
         />
 
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: { xs: 'stretch', sm: 'center' }, 
-          gap: 1,
-          flexWrap: 'wrap'
-        }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            gap: 1,
+            flexWrap: 'wrap'
+          }}
+        >
           <Typography variant="body2" sx={{ mr: { xs: 0, sm: 1 }, mb: { xs: 1, sm: 0 } }}>
             Filtered by
           </Typography>
@@ -265,34 +328,34 @@ export default function EmployeeRequests() {
             All
           </Button>
           <Button
-            variant={filterStatus === 'Approved' ? 'contained' : 'outlined'}
-            onClick={() => handleFilterClick('Approved')}
+            variant={filterStatus === 'Completed' ? 'contained' : 'outlined'}
+            onClick={() => handleFilterClick('Completed')}
             sx={{
               borderRadius: '20px',
               px: 2,
-              backgroundColor: filterStatus === 'Approved' ? '#e07a64' : 'transparent',
-              color: filterStatus === 'Approved' ? 'white' : 'black',
+              backgroundColor: filterStatus === 'Completed' ? '#e07a64' : 'transparent',
+              color: filterStatus === 'Completed' ? 'white' : 'black',
               borderColor: '#e9d9c2',
               '&:hover': {
-                backgroundColor: filterStatus === 'Approved' ? '#d06954' : 'rgba(0, 0, 0, 0.04)',
-                borderColor: filterStatus === 'Approved' ? '#d06954' : '#e9d9c2'
+                backgroundColor: filterStatus === 'Completed' ? '#d06954' : 'rgba(0, 0, 0, 0.04)',
+                borderColor: filterStatus === 'Completed' ? '#d06954' : '#e9d9c2'
               }
             }}
           >
             Approved
           </Button>
           <Button
-            variant={filterStatus === 'Rejected' ? 'contained' : 'outlined'}
-            onClick={() => handleFilterClick('Rejected')}
+            variant={filterStatus === 'Cancelled' ? 'contained' : 'outlined'}
+            onClick={() => handleFilterClick('Cancelled')}
             sx={{
               borderRadius: '20px',
               px: 2,
-              backgroundColor: filterStatus === 'Rejected' ? '#e07a64' : 'transparent',
-              color: filterStatus === 'Rejected' ? 'white' : 'black',
+              backgroundColor: filterStatus === 'Cancelled' ? '#e07a64' : 'transparent',
+              color: filterStatus === 'Cancelled' ? 'white' : 'black',
               borderColor: '#e9d9c2',
               '&:hover': {
-                backgroundColor: filterStatus === 'Rejected' ? '#d06954' : 'rgba(0, 0, 0, 0.04)',
-                borderColor: filterStatus === 'Rejected' ? '#d06954' : '#e9d9c2'
+                backgroundColor: filterStatus === 'Cancelled' ? '#d06954' : 'rgba(0, 0, 0, 0.04)',
+                borderColor: filterStatus === 'Cancelled' ? '#d06954' : '#e9d9c2'
               }
             }}
           >
@@ -331,104 +394,110 @@ export default function EmployeeRequests() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => {
-                const statusColors = getStatusColor(row.status);
-                const typeColors = getTypeColor(row.type);
+              {filteredTransactions.map((transaction) => {
+                const statusColors = getStatusColor(transaction.status);
                 return (
-                  <TableRow hover role="checkbox" tabIndex={-1} key={index} sx={{ '& td': { borderColor: '#f0f0f0' } }}>
-                    <TableCell>{row.id}</TableCell>
-                    <TableCell>{row.title}</TableCell>
-                    <TableCell>{row.date}</TableCell>
-                    <TableCell align="right">
+                  <TableRow hover role="checkbox" tabIndex={-1} key={transaction.id} sx={{ '& td': { borderColor: '#f0f0f0' } }}>
+                    <TableCell>{transaction.id}</TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" fontWeight="bold">
+                          {transaction.employee.name}
+                        </Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          {transaction.employee.email}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2">{transaction.title}</Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          Ref: {transaction.referenceNumber}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>{formatDate(transaction.createdAt)}</TableCell>
+                    <TableCell align="left">
                       <Box
                         sx={{
-                          color: row.amount.startsWith('+') ? '#00b79a' : '#ee3827',
+                          color: transaction.type === 'withdrawal' ? '#ee3827' : '#00b79a',
                           fontWeight: 'bold'
                         }}
                       >
-                        {row.amount}
+                        {formatAmount(transaction.amount)}
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Box
-                        sx={{
-                          backgroundColor: typeColors.bg,
-                          color: typeColors.text,
-                          display: 'inline-block',
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: 1,
-                          width: '120px',
-                          textAlign: 'center'
-                        }}
-                      >
-                        <Typography variant="body2">{row.type}</Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            backgroundColor: statusColors.bg,
+                            color: statusColors.text,
+                            display: 'inline-block',
+                            px: 2,
+                            py: 0.5,
+                            borderRadius: 1,
+                            width: '100px',
+                            textAlign: 'center'
+                          }}
+                        >
+                          <Typography variant="body2">{transaction.status === 'completed' ? 'Approved' : transaction.status === 'cancelled' ? 'Rejected' : 'Pending'}</Typography>
+                        </Box>
+                        {
+                          // transaction.verified && (
+                          //   <Box
+                          //     sx={{
+                          //       backgroundColor: '#ccf1ea',
+                          //       color: '#00b79a',
+                          //       display: 'inline-block',
+                          //       px: 1,
+                          //       py: 0.25,
+                          //       borderRadius: 1,
+                          //       width: '100px',
+                          //       textAlign: 'center'
+                          //     }}
+                          //   >
+                          //     <Typography variant="caption">Verified</Typography>
+                          //   </Box>
+                          // )
+                        }
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Box
-                        sx={{
-                          backgroundColor: statusColors.bg,
-                          color: statusColors.text,
-                          display: 'inline-block',
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: 1,
-                          width: '120px',
-                          textAlign: 'center'
-                        }}
-                      >
-                        <Typography variant="body2">{row.status}</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box
-                        sx={{
-                          backgroundColor: row.verified === 'true' ? '#ccf1ea' : '#fcd6d5',
-                          color: row.verified === 'true' ? '#00b79a' : '#ee3827',
-                          display: 'inline-block',
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: 1,
-                          width: '80px',
-                          textAlign: 'center'
-                        }}
-                      >
-                        <Typography variant="body2">{row.verified === 'true' ? 'Yes' : 'No'}</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      {row.status === 'pending' && (
+                      {transaction.status === 'pending' && (
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           <Button
                             variant="contained"
                             size="small"
-                            onClick={() => handleApprovalAction(row.id, 'approve')}
+                            onClick={() => handleApprovalAction(transaction.id, 'approve')}
+                            disabled={processingId === transaction.id}
                             sx={{
                               backgroundColor: '#00b79a',
                               '&:hover': { backgroundColor: '#009688' },
                               minWidth: '70px'
                             }}
                           >
-                            Approve
+                            {processingId === transaction.id ? <CircularProgress size={16} color="inherit" /> : 'Approve'}
                           </Button>
                           <Button
                             variant="contained"
                             size="small"
-                            onClick={() => handleApprovalAction(row.id, 'reject')}
+                            onClick={() => handleApprovalAction(transaction.id, 'reject')}
+                            disabled={processingId === transaction.id}
                             sx={{
                               backgroundColor: '#ee3827',
                               '&:hover': { backgroundColor: '#d32f2f' },
                               minWidth: '70px'
                             }}
                           >
-                            Reject
+                            {processingId === transaction.id ? <CircularProgress size={16} color="inherit" /> : 'Reject'}
                           </Button>
                         </Box>
                       )}
-                      {row.status !== 'pending' && (
+                      {transaction.status !== 'pending' && (
                         <Typography variant="body2" color="textSecondary">
-                          {row.status === 'approved' ? 'Approved' : 'Rejected'}
+                          {transaction.status === 'completed' ? 'Approved' : 'Rejected'}
                         </Typography>
                       )}
                     </TableCell>
@@ -457,12 +526,12 @@ export default function EmployeeRequests() {
               fontWeight: 400
             }}
           >
-            Showing {page * rowsPerPage + 1}-{Math.min((page + 1) * rowsPerPage, filteredRows.length)} of {filteredRows.length}
+            Showing page {currentPage} of {totalPages} ({totalTransactions} total requests)
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Button
-              disabled={page === 0}
-              onClick={(e) => handleChangePage(e, page - 1)}
+              disabled={currentPage === 1}
+              onClick={() => handleChangePage(currentPage - 1)}
               sx={{
                 minWidth: '32px',
                 minHeight: '32px',
@@ -481,8 +550,8 @@ export default function EmployeeRequests() {
               &lt;
             </Button>
             <Button
-              disabled={page >= Math.ceil(filteredRows.length / rowsPerPage) - 1}
-              onClick={(e) => handleChangePage(e, page + 1)}
+              disabled={currentPage >= totalPages}
+              onClick={() => handleChangePage(currentPage + 1)}
               sx={{
                 minWidth: '32px',
                 minHeight: '32px',
@@ -503,6 +572,18 @@ export default function EmployeeRequests() {
           </Box>
         </Box>
       </Paper>
+
+      {/* Empty State */}
+      {filteredTransactions.length === 0 && !initialLoading && (
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Typography variant="h6" color="textSecondary" gutterBottom>
+            No requests found
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            {searchTerm || filterStatus !== 'All' ? 'Try adjusting your search or filter criteria.' : 'There are no employee requests at the moment.'}
+          </Typography>
+        </Box>
+      )}
 
       {/* Approval Dialog */}
       <Dialog open={approvalDialog.open} onClose={handleApprovalCancel} maxWidth="sm" fullWidth>

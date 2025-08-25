@@ -1,5 +1,5 @@
 import api from './api';
-import type { Employee, CreateEmployeeData, CreateCorpEmployeeData, UpdateCorpEmployeeData, EmployeeRequest, UpdateRequestStatusData, PaginatedResponse, PaginationParams, Transaction, CorpEmployeesResponse, CorpEmployee } from '../types/api';
+import type { Employee, CreateEmployeeData, CreateCorpEmployeeData, UpdateCorpEmployeeData, EmployeeRequest, UpdateRequestStatusData, PaginatedResponse, PaginationParams, Transaction, CorpEmployeesResponse, CorpEmployee, CorpTransaction, CorpTransactionsResponse } from '../types/api';
 
 export const employeeService = {
   // Get corporate employees with pagination and search (new API)
@@ -161,6 +161,24 @@ export const employeeService = {
   // Upload employee data (from Excel preview)
   uploadEmployeeData: async (employees: CreateCorpEmployeeData[]): Promise<{ message: string; count: number }> => {
     const response = await api.post('/corp/employees/bulk-create', { employees });
+    return response.data;
+  },
+
+  // Get corporate transactions
+  getCorpTransactions: async (page: number = 1, limit: number = 10): Promise<CorpTransactionsResponse> => {
+    const response = await api.get('/corp/transactions', {
+      params: { page, limit }
+    });
+    return response.data;
+  },
+
+  // Update transaction status
+  updateTransactionStatus: async (transactionId: number, action: 'approve' | 'reject', remark?: string): Promise<any> => {
+    const response = await api.put('/corp/transactions/approve-reject', {
+      transactionId,
+      action,
+      remark: remark || ''
+    });
     return response.data;
   }
 };

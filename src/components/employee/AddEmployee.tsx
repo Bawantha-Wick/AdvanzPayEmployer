@@ -469,7 +469,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
                       >
                         {employeeData.status === 'INAC' ? 'Reactivate employee' : 'Deactivate employee'}
                       </Button>
-                      <Button
+                      {/* <Button
                         variant="outlined"
                         onClick={handleBlock}
                         sx={{
@@ -484,7 +484,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
                         }}
                       >
                         {employeeData.status === 'BLCK' ? 'Unblock employee' : 'Block employee'}
-                      </Button>
+                      </Button> */}
                     </Box>
                   </Grid>
                 )}

@@ -17,6 +17,7 @@ import EmployeeRequests from './components/employee/EmployeeRequests';
 import AuthorizeEmployees from './components/backup/AuthorizeEmployees';
 import Settlements from './components/settlement/Settlements';
 import Reports from './components/report/Reports';
+import ReportsComingSoon from './components/report/ReportsComingSoon';
 
 function App() {
   return (
@@ -93,6 +94,7 @@ function App() {
             <Route path="authorize-employees" element={<AuthorizeEmployees />} />
             <Route path="settlements" element={<Settlements />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="reports-coming-soon" element={<ReportsComingSoon />} />
           </Route>
           {/* Catch-all route for 404 */}
           <Route path="*" element={<NotFound />} />

@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { MdKeyboardArrowDown, MdKeyboardArrowRight } from 'react-icons/md';
 import { FaRegUser } from 'react-icons/fa';
 import { BsFileEarmarkText } from 'react-icons/bs';
-import { IoHomeOutline,  IoClose } from 'react-icons/io5';
+import { IoHomeOutline, IoClose } from 'react-icons/io5';
 import { RiFileListLine } from 'react-icons/ri';
 import { HiOutlineUserGroup } from 'react-icons/hi2';
 import { BiLogOut } from 'react-icons/bi';
@@ -73,10 +73,7 @@ const SideBar: React.FC<SideBarProps> = ({ onClose }) => {
   return (
     <div className="w-84 lg:w-84 bg-[#DC7356] min-h-screen flex flex-col text-white relative">
       {/* Mobile close button */}
-      <button
-        onClick={onClose}
-        className="lg:hidden absolute top-4 right-4 p-2 text-white hover:bg-[#DC7356] rounded-full z-10"
-      >
+      <button onClick={onClose} className="lg:hidden absolute top-4 right-4 p-2 text-white hover:bg-[#DC7356] rounded-full z-10">
         <IoClose size={24} />
       </button>
 
@@ -107,11 +104,15 @@ const SideBar: React.FC<SideBarProps> = ({ onClose }) => {
             <div className="bg-[#DC7356]" style={subMenuStyles}>
               <Link to="/app/employees" className="flex block py-2">
                 <FaRegUser className="text-l" style={subMenuIconStyles} />
-                <span style={subMenuItemStyles} className={isActiveRoute('/app/employees') ? 'font-bold' : ''}>Employees</span>
+                <span style={subMenuItemStyles} className={isActiveRoute('/app/employees') ? 'font-bold' : ''}>
+                  Employees
+                </span>
               </Link>
               <Link to="/app/employee-requests" className="flex block py-2">
                 <LuUserRoundPlus className="text-xl" style={subMenuIconStyles} />
-                <span style={subMenuItemStyles} className={isActiveRoute('/app/employee-requests') ? 'font-bold' : ''}>Employee Requests</span>
+                <span style={subMenuItemStyles} className={isActiveRoute('/app/employee-requests') ? 'font-bold' : ''}>
+                  Employee Requests
+                </span>
               </Link>
               {/* <Link to="/app/authorize-employees" className="flex block py-2">
                 <LuUserRoundCheck className="text-xl" style={subMenuIconStyles} />
@@ -130,10 +131,18 @@ const SideBar: React.FC<SideBarProps> = ({ onClose }) => {
         </div>
 
         {/* Reports */}
-        <div style={menuItemStyles}>
+        {/* <div style={menuItemStyles}>
           <Link to="/app/reports" className="flex text-white hover:bg-[#DC7356] transition-colors">
             <BsFileEarmarkText className="text-xl" style={iconStyles} />
             <span className={isActiveRoute('/app/reports') ? 'font-bold' : ''}>Reports</span>
+          </Link>
+        </div> */}
+
+        {/* Advanced Reports */}
+        <div style={menuItemStyles}>
+          <Link to="/app/reports-coming-soon" className="flex text-white hover:bg-[#DC7356] transition-colors">
+            <RiFileListLine className="text-xl" style={iconStyles} />
+            <span className={isActiveRoute('/app/reports-coming-soon') ? 'font-bold' : ''}>Reports</span>
           </Link>
         </div>
 
@@ -150,11 +159,15 @@ const SideBar: React.FC<SideBarProps> = ({ onClose }) => {
             <div className="flex flex-col bg-[#DC7356]" style={subMenuStyles}>
               <Link to="/app/users" className="flex block py-2">
                 <FaRegUser className="text-xl" style={subMenuIconStyles} />
-                <span style={subMenuItemStyles} className={isActiveRoute('/app/users') ? 'font-bold' : ''}>Users</span>
+                <span style={subMenuItemStyles} className={isActiveRoute('/app/users') ? 'font-bold' : ''}>
+                  Users
+                </span>
               </Link>
               <Link to="/app/user-roles" className="flex block py-2">
                 <RiFileListLine className="text-xl" style={subMenuIconStyles} />
-                <span style={subMenuItemStyles} className={isActiveRoute('/app/user-roles') ? 'font-bold' : ''}>User Roles</span>
+                <span style={subMenuItemStyles} className={isActiveRoute('/app/user-roles') ? 'font-bold' : ''}>
+                  User Roles
+                </span>
               </Link>
             </div>
           )}

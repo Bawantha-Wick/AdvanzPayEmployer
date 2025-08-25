@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { Box, Card, CardContent, Typography, Paper, Popover, Alert } from '@mui/material';
+import { Box, Card, CardContent, Typography, Paper, Alert } from '@mui/material';
 import { ArrowUpward, Inventory, Payments, People, AccountBalanceWallet } from '@mui/icons-material';
 import dayjs, { Dayjs } from 'dayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Area } from 'recharts';
 import { BsCalendar3 } from 'react-icons/bs';
 import { IoChevronDown } from 'react-icons/io5';
@@ -32,9 +30,7 @@ const Dashboard: React.FC = () => {
     return { start, end };
   };
 
-  const [dateRange, setDateRange] = useState(() =>
-    validateDateRange(startDate, endDate)
-  );
+  const [dateRange, setDateRange] = useState(() => validateDateRange(startDate, endDate));
 
   // Format dates for API call (YYYY-MM-DD format)
   const fromDate = dateRange.start.format('YYYY-MM-DD');
@@ -42,69 +38,69 @@ const Dashboard: React.FC = () => {
 
   // Fetch dashboard analytics with date range
   const { data: analytics, isLoading, error } = useDashboardAnalytics(corpId, fromDate, toDate);
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(startDate);
-  const [selectionStep, setSelectionStep] = useState<'start' | 'end'>('start');
-  // Keep track of highlighted range for visualization
-  const [highlightRange, setHighlightRange] = useState<boolean>(false);
+  // Date picker state
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState<Dayjs>(dateRange.start);
+  const [tempEndDate, setTempEndDate] = useState<Dayjs>(dateRange.end);
+  const [currentView, setCurrentView] = useState<Dayjs>(dateRange.start);
+  const [selectionMode, setSelectionMode] = useState<'start' | 'end'>('start');
 
-  const handleDateRangeClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-    // Start by showing the existing selection in visualization mode
-    setHighlightRange(true);
-    // Default to selecting the start date first
-    setSelectionStep('start');
-    // Always start with the current start date selected
-    setSelectedDate(dateRange.start);
+  const handleDatePickerToggle = () => {
+    if (!isDatePickerOpen) {
+      // Reset temp values when opening
+      setTempStartDate(dateRange.start);
+      setTempEndDate(dateRange.end);
+      setCurrentView(dateRange.start);
+      setSelectionMode('start');
+    }
+    setIsDatePickerOpen(!isDatePickerOpen);
   };
 
-  const handleClose = () => {
-    setAnchorEl(null);
-    setSelectionStep('start');
-    // Stop highlighting range when closed
-    setHighlightRange(false);
-  };
-
-  const handleDateChange = (date: Dayjs | null) => {
-    if (!date) return;
-
-    if (selectionStep === 'start') {
-      // When selecting start date
-      const newStart = date;
-
-      // If the new start date is after the current end date, adjust the end date
-      if (newStart.isAfter(dateRange.end)) {
-        setDateRange(validateDateRange(newStart, newStart.add(1, 'day')));
-      } else {
-        // Update date range with new start date
-        setDateRange((prev) => validateDateRange(newStart, prev.end));
+  const handleDateClick = (date: Dayjs) => {
+    if (selectionMode === 'start') {
+      setTempStartDate(date);
+      setCurrentView(date);
+      // If selected start date is after current end date, adjust end date
+      if (date.isAfter(tempEndDate)) {
+        setTempEndDate(date.add(1, 'day'));
       }
-
-      setSelectedDate(newStart);
-
-      // Enable range highlighting
-      setHighlightRange(true);
-
-      // Switch to end date selection
-      setSelectionStep('end');
+      setSelectionMode('end');
     } else {
-      // When selecting end date
-      // Ensure end date is not before start date
-      if (date.isBefore(dateRange.start) || date.isSame(dateRange.start)) {
-        // If user selects a date before or same as start, set it as start and adjust end
-        const newEnd = dateRange.start.isAfter(date) ? dateRange.start : date.add(1, 'day');
-        setDateRange(validateDateRange(date, newEnd));
+      // Selecting end date
+      if (date.isBefore(tempStartDate)) {
+        // If end date is before start, swap them
+        setTempStartDate(date);
+        setTempEndDate(tempStartDate);
+      } else if (date.isSame(tempStartDate)) {
+        // If same date, add one day to end
+        setTempEndDate(date.add(1, 'day'));
       } else {
-        // Set the end date (valid case where end > start)
-        setDateRange((prev) => validateDateRange(prev.start, date));
+        setTempEndDate(date);
       }
-
-      // Close the calendar after end date is selected
-      handleClose();
+      setSelectionMode('start'); // Reset for next selection
     }
   };
 
-  const open = Boolean(anchorEl);
+  const handleApplyDateRange = () => {
+    setDateRange(validateDateRange(tempStartDate, tempEndDate));
+    setIsDatePickerOpen(false);
+  };
+
+  const handleCancelDateRange = () => {
+    setIsDatePickerOpen(false);
+  };
+
+  const isDateInRange = (date: Dayjs) => {
+    return date.isAfter(tempStartDate.subtract(1, 'day')) && date.isBefore(tempEndDate.add(1, 'day'));
+  };
+
+  const isStartDate = (date: Dayjs) => {
+    return date.isSame(tempStartDate, 'day');
+  };
+
+  const isEndDate = (date: Dayjs) => {
+    return date.isSame(tempEndDate, 'day');
+  };
 
   // Transform API data for chart
   const chartData = React.useMemo(() => {
@@ -144,265 +140,218 @@ const Dashboard: React.FC = () => {
       {/* Date Range Display */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box /> {/* Empty box for alignment to match Reports.tsx layout */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            borderRadius: '4px',
-            padding: '4px 12px',
-            cursor: 'pointer'
-          }}
-          onClick={handleDateRangeClick}
-        >
-          <BsCalendar3 size={20} color="#767676" style={{ marginRight: '8px' }} />
-          <Typography variant="body2" sx={{ color: '#606060', fontWeight: 500 }}>
-            <span style={{ fontWeight: 'bold' }}>{dateRange.start.format('MMM DD, YYYY')}</span>
-            <span style={{ margin: '0 8px', color: '#999' }}>{'->'}</span>
-            <span style={{ fontWeight: 'bold' }}>{dateRange.end.format('MMM DD, YYYY')}</span>
-          </Typography>
-          <IoChevronDown size={20} color="#767676" style={{ marginLeft: '8px' }} />
-        </Box>{' '}
-        <Popover
-          open={open}
-          anchorEl={anchorEl}
-          onClose={handleClose}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right'
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right'
-          }}
-          disableAutoFocus
-          disableEnforceFocus
-          disableRestoreFocus
-          disablePortal={false}
-          keepMounted={false}
-          sx={{
-            '& .MuiPopover-root': {
-              position: 'fixed !important'
-            },
-            '& .MuiPopover-paper': {
-              overflow: 'hidden',
-              borderRadius: '24px',
-              boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.15)',
-              border: '1px solid #e0e0e0',
-              backgroundColor: '#ffffff',
-              position: 'fixed !important',
-              width: '360px !important',
-              height: '450px !important',
-              maxHeight: '450px !important',
-              minHeight: '450px !important',
-              transform: 'none !important',
-              willChange: 'auto'
-            },
-            '& .MuiPaper-root': {
-              transform: 'none !important'
-            }
-          }}
-        >
-          <Box sx={{ p: 2, textAlign: 'center', bgcolor: '#ff6b00', color: 'white' }}>
-            {/* <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}> */}
-            {/* {selectionStep === 'start' ? 'Select Start Date' : 'Select End Date'} */}
-            {/* </Typography> */}
-            {/* Show current date range information */}
-            <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
-              {highlightRange ? (
-                <>
-                  Current range: {dateRange.start.format('MMM DD')} - {dateRange.end.format('MMM DD, YYYY')}
-                </>
-              ) : (
-                selectionStep === 'end' && <>Start date: {dateRange.start.format('MMM DD, YYYY')}</>
-              )}
+        <Box sx={{ position: 'relative' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              borderRadius: '4px',
+              padding: '4px 12px',
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.04)'
+              }
+            }}
+            onClick={handleDatePickerToggle}
+          >
+            <BsCalendar3 size={20} color="#767676" style={{ marginRight: '8px' }} />
+            <Typography variant="body2" sx={{ color: '#606060', fontWeight: 500 }}>
+              <span style={{ fontWeight: 'bold' }}>{dateRange.start.format('MMM DD, YYYY')}</span>
+              <span style={{ margin: '0 8px', color: '#999' }}>{'->'}</span>
+              <span style={{ fontWeight: 'bold' }}>{dateRange.end.format('MMM DD, YYYY')}</span>
             </Typography>
+            <IoChevronDown
+              size={20}
+              color="#767676"
+              style={{
+                marginLeft: '8px',
+                transform: isDatePickerOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s ease'
+              }}
+            />
           </Box>
-          <Box sx={{
-            width: '360px',
-            height: '380px',
-            overflow: 'hidden',
-            position: 'relative'
-          }}>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DateCalendar
-                value={selectedDate}
-                onChange={handleDateChange}
-                views={['day']}
-                fixedWeekNumber={6}
-                slotProps={{
-                  day: (ownerState) => {
-                    if (!ownerState.day) return {};
 
-                    // Format dates to compare
-                    const currentDayFormatted = ownerState.day.format('YYYY-MM-DD');
-                    const startDateFormatted = dateRange.start.format('YYYY-MM-DD');
-                    const endDateFormatted = dateRange.end.format('YYYY-MM-DD');
+          {/* Custom Date Picker Dropdown */}
+          {isDatePickerOpen && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                zIndex: 1300,
+                mt: 1,
+                width: '380px',
+                backgroundColor: '#ffffff',
+                borderRadius: '16px',
+                boxShadow: '0px 8px 32px rgba(0, 0, 0, 0.12)',
+                border: '1px solid #e0e0e0',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Header */}
+              <Box sx={{ p: 2, bgcolor: '#ff6b00', color: 'white', textAlign: 'center' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                  {selectionMode === 'start' ? 'Select Start Date' : 'Select End Date'}
+                </Typography>
+                <Typography variant="caption">{selectionMode === 'start' ? 'Choose the beginning of your date range' : `Start: ${tempStartDate.format('MMM DD, YYYY')} - Now pick end date`}</Typography>
+              </Box>
 
-                    // Check if this day is the start date
-                    const isStartDate = currentDayFormatted === startDateFormatted;
+              {/* Calendar Grid */}
+              <Box sx={{ p: 2 }}>
+                {/* Month Navigation */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box
+                    sx={{
+                      cursor: 'pointer',
+                      p: 1,
+                      borderRadius: '50%',
+                      '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
+                    }}
+                    onClick={() => setCurrentView(currentView.subtract(1, 'month'))}
+                  >
+                    ←
+                  </Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                    {currentView.format('MMMM YYYY')}
+                  </Typography>
+                  <Box
+                    sx={{
+                      cursor: 'pointer',
+                      p: 1,
+                      borderRadius: '50%',
+                      '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
+                    }}
+                    onClick={() => setCurrentView(currentView.add(1, 'month'))}
+                  >
+                    →
+                  </Box>
+                </Box>
 
-                    // Check if this day is the end date
-                    const isEndDate = currentDayFormatted === endDateFormatted;
+                {/* Weekday Headers */}
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, mb: 1 }}>
+                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+                    <Box key={day} sx={{ textAlign: 'center', py: 1, fontSize: '12px', color: '#666' }}>
+                      {day}
+                    </Box>
+                  ))}
+                </Box>
 
-                    // Check if this day is between start and end (for highlighting the range)
-                    const isInRange = highlightRange && ownerState.day.isAfter(dateRange.start) && ownerState.day.isBefore(dateRange.end);
+                {/* Calendar Days */}
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
+                  {(() => {
+                    const startOfMonth = currentView.startOf('month');
+                    const endOfMonth = currentView.endOf('month');
+                    const startOfWeek = startOfMonth.startOf('week');
+                    const endOfWeek = endOfMonth.endOf('week');
 
-                    if (isStartDate) {
-                      return {
-                        sx: {
-                          backgroundColor: '#ff6b00',
-                          color: 'white',
-                          '&:hover': {
-                            backgroundColor: '#ff6b00'
-                          }
-                        }
-                      };
-                    } else if (isEndDate) {
-                      return {
-                        sx: {
-                          backgroundColor: '#ff8c40',
-                          color: 'white',
-                          '&:hover': {
-                            backgroundColor: '#ff8c40'
-                          }
-                        }
-                      };
-                    } else if (isInRange) {
-                      return {
-                        sx: {
-                          backgroundColor: 'rgba(255, 107, 0, 0.1)',
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 107, 0, 0.2)'
-                          }
-                        }
-                      };
+                    const days = [];
+                    let current = startOfWeek;
+
+                    while (current.isBefore(endOfWeek) || current.isSame(endOfWeek, 'day')) {
+                      days.push(current);
+                      current = current.add(1, 'day');
                     }
-                    return {};
-                  }
-                }}
+
+                    return days.map((date) => {
+                      const isCurrentMonth = date.isSame(currentView, 'month');
+                      const isToday = date.isSame(dayjs(), 'day');
+                      const isStart = isStartDate(date);
+                      const isEnd = isEndDate(date);
+                      const inRange = isDateInRange(date) && !isStart && !isEnd;
+
+                      return (
+                        <Box
+                          key={date.format('YYYY-MM-DD')}
+                          sx={{
+                            aspectRatio: '1',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: isCurrentMonth ? 'pointer' : 'default',
+                            borderRadius: '50%',
+                            fontSize: '14px',
+                            fontWeight: isToday ? 'bold' : 'normal',
+                            color: !isCurrentMonth ? '#ccc' : isStart || isEnd ? 'white' : '#333',
+                            backgroundColor: isStart ? '#ff6b00' : isEnd ? '#ff8c40' : inRange ? 'rgba(255, 107, 0, 0.1)' : 'transparent',
+                            border: isToday && !isStart && !isEnd ? '2px solid #ff6b00' : 'none',
+                            '&:hover': isCurrentMonth
+                              ? {
+                                  backgroundColor: isStart ? '#ff6b00' : isEnd ? '#ff8c40' : 'rgba(255, 107, 0, 0.2)'
+                                }
+                              : {}
+                          }}
+                          onClick={() => isCurrentMonth && handleDateClick(date)}
+                        >
+                          {date.format('D')}
+                        </Box>
+                      );
+                    });
+                  })()}
+                </Box>
+              </Box>
+
+              {/* Action Buttons */}
+              <Box
                 sx={{
-                  width: '320px !important',
-                  height: '380px !important',
-                  maxHeight: '380px !important',
-                  minHeight: '380px !important',
-                  bgcolor: '#ffffff',
-                  color: '#333',
-                  padding: '12px',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  '& .MuiPickersCalendarHeader-label': {
-                    color: '#333',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    textTransform: 'capitalize',
-                    textAlign: 'center',
-                    margin: 'auto'
-                  },
-                  '& .MuiPickersCalendarHeader-root': {
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0 8px',
-                    marginBottom: '8px',
-                    height: '40px !important',
-                    minHeight: '40px !important'
-                  },
-                  '& .MuiPickersCalendarHeader-switchViewButton': {
-                    color: '#666'
-                  },
-                  '& .MuiPickersArrowSwitcher-button': {
-                    color: '#666'
-                  },
-                  '& .MuiDayCalendar-header': {
-                    height: '40px !important',
-                    minHeight: '40px !important',
-                    '& .MuiDayCalendar-weekDayLabel': {
-                      color: '#666',
-                      fontSize: '12px',
-                      width: '36px !important',
-                      height: '36px !important',
-                      minHeight: '36px !important',
-                      margin: '0'
-                    }
-                  },
-                  '& .MuiPickersDay-root': {
-                    color: '#333',
-                    fontSize: '14px',
-                    width: '32px !important',
-                    height: '32px !important',
-                    minWidth: '32px !important',
-                    minHeight: '32px !important',
-                    margin: '2px',
-                    borderRadius: '50%',
-                    '&.Mui-selected': {
-                      backgroundColor: '#ff6b00',
-                      color: '#fff',
-                      '&:hover': {
-                        backgroundColor: '#ff6b00'
-                      },
-                      '&:focus': {
-                        backgroundColor: '#ff6b00'
-                      }
-                    },
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 107, 0, 0.1)'
-                    },
-                    '&.MuiPickersDay-today': {
-                      border: '1px solid #ff6b00'
-                    },
-                    '&.Mui-disabled': {
-                      color: '#cccccc'
-                    }
-                  },
-                  '& .MuiPickersDay-hiddenDaySpacingFiller': {
-                    backgroundColor: 'transparent',
-                    width: '32px !important',
-                    height: '32px !important'
-                  },
-                  '& .MuiDialogActions-root': {
-                    display: 'none'
-                  },
-                  '& .MuiPickersSlideTransition-root': {
-                    minHeight: '280px !important',
-                    height: '280px !important',
-                    maxHeight: '280px !important',
-                    overflow: 'hidden'
-                  },
-                  '& .MuiDayCalendar-monthContainer': {
-                    position: 'relative',
-                    height: '280px !important',
-                    minHeight: '280px !important',
-                    maxHeight: '280px !important'
-                  },
-                  '& .MuiDayCalendar-slideTransition': {
-                    minHeight: '280px !important',
-                    height: '280px !important',
-                    maxHeight: '280px !important'
-                  },
-                  '& .MuiDayCalendar-weekContainer': {
-                    height: '40px !important',
-                    minHeight: '40px !important',
-                    margin: '2px 0'
-                  }
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  borderTop: '1px solid #e0e0e0',
+                  backgroundColor: '#f8f9fa'
                 }}
-              />
-            </LocalizationProvider>
-          </Box>
-        </Popover>
+              >
+                <Box sx={{ fontSize: '12px', color: '#666', alignSelf: 'center' }}>{selectionMode === 'start' ? 'Click a date to start' : 'Click a date to finish'}</Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Box
+                    sx={{
+                      px: 2,
+                      py: 1,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: '#666',
+                      '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
+                    }}
+                    onClick={handleCancelDateRange}
+                  >
+                    Cancel
+                  </Box>
+                  <Box
+                    sx={{
+                      px: 2,
+                      py: 1,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      backgroundColor: '#ff6b00',
+                      color: 'white',
+                      '&:hover': { backgroundColor: '#e55a00' }
+                    }}
+                    onClick={handleApplyDateRange}
+                  >
+                    Apply
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </Box>
       </Box>
 
       {/* Stat Cards */}
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: {
-          xs: '1fr',
-          sm: '1fr 1fr',
-          md: '1fr 1fr',
-          lg: 'repeat(4, 1fr)'
-        },
-        gap: 3,
-        mb: 4
-      }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: '1fr 1fr',
+            md: '1fr 1fr',
+            lg: 'repeat(4, 1fr)'
+          },
+          gap: 3,
+          mb: 4
+        }}
+      >
         {/* Withdrawal Requests Card */}
         <Box>
           <Card sx={{ bgcolor: '#e8d7cd', borderRadius: '40px', position: 'relative', height: '11.5rem' }}>
@@ -591,16 +540,16 @@ const Dashboard: React.FC = () => {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <Box sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              color: '#666'
-            }}>
-              <Typography variant="body2">
-                No withdrawal data available for the selected period
-              </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                color: '#666'
+              }}
+            >
+              <Typography variant="body2">No withdrawal data available for the selected period</Typography>
             </Box>
           )}
         </Box>

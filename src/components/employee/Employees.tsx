@@ -35,7 +35,7 @@ const columns: readonly Column[] = [
   { id: 'name', label: 'EMPLOYEE NAME', minWidth: 170 },
   { id: 'mobile', label: 'MOBILE NO', minWidth: 130 },
   { id: 'email', label: 'EMAIL', minWidth: 170 },
-  { id: 'salary', label: 'SALARY (LKR)', minWidth: 130 },
+  { id: 'salary', label: 'SALARY', minWidth: 130 },
   { id: 'accountStatus', label: 'ACCOUNT STATUS', minWidth: 150 },
   // { id: 'approveStatus', label: 'APPROVE STATUS', minWidth: 150 },
   { id: 'action', label: 'ACTION', minWidth: 130 }
@@ -192,14 +192,16 @@ export default function Employees() {
 
   return (
     <Box sx={{ width: '100%', bgcolor: '#fcf9f1', borderRadius: 2, p: { xs: 2, md: 3 } }}>
-      <Box sx={{
-        display: 'flex',
-        flexDirection: { xs: 'column', md: 'row' },
-        justifyContent: 'space-between',
-        alignItems: { xs: 'stretch', md: 'center' },
-        mb: 2,
-        gap: { xs: 2, md: 0 }
-      }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'stretch', md: 'center' },
+          mb: 2,
+          gap: { xs: 2, md: 0 }
+        }}
+      >
         <TextField
           placeholder="Search employees..."
           size="small"
@@ -221,11 +223,13 @@ export default function Employees() {
           }}
         />
 
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          gap: 2
-        }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2
+          }}
+        >
           <Button
             variant="outlined"
             startIcon={<MdFileUpload />}
@@ -307,7 +311,7 @@ export default function Employees() {
                     <TableCell>{employee.name}</TableCell>
                     <TableCell>{employee.mobile}</TableCell>
                     <TableCell>{employee.email}</TableCell>
-                    <TableCell>LKR {employee.basicSalAmt}</TableCell>
+                    <TableCell>{parseFloat(employee.basicSalAmt)} USD</TableCell>
                     <TableCell>
                       <Box
                         sx={{
