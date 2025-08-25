@@ -53,6 +53,7 @@ const ExcelPreview: React.FC<ExcelPreviewProps> = ({ data, fileName, onBack, onS
   const [tempValue, setTempValue] = React.useState<string>('');
   const [validationErrors, setValidationErrors] = React.useState<ValidationError[]>([]);
   const [apiError, setApiError] = React.useState<string>('');
+  const [hasSubmitted, setHasSubmitted] = React.useState<boolean>(false);
 
   const validateData = React.useCallback(() => {
     const errors: ValidationError[] = [];
@@ -118,6 +119,9 @@ const ExcelPreview: React.FC<ExcelPreviewProps> = ({ data, fileName, onBack, onS
     setEmployees(updatedEmployees);
     setEditingCell(null);
     setTempValue('');
+    // Reset submit state when data is edited
+    setHasSubmitted(false);
+    setApiError('');
   };
 
   const handleCancelEdit = () => {
@@ -128,6 +132,9 @@ const ExcelPreview: React.FC<ExcelPreviewProps> = ({ data, fileName, onBack, onS
   const handleRemoveEmployee = (rowIndex: number) => {
     const updatedEmployees = employees.filter((_, index) => index !== rowIndex);
     setEmployees(updatedEmployees);
+    // Reset submit state when data is modified
+    setHasSubmitted(false);
+    setApiError('');
   };
 
   const handleSubmit = async () => {
@@ -135,9 +142,11 @@ const ExcelPreview: React.FC<ExcelPreviewProps> = ({ data, fileName, onBack, onS
       return;
     }
 
+    setHasSubmitted(true);
     setApiError(''); // Clear any previous API errors
     onSubmit(employees, (error: string) => {
       setApiError(error);
+      // Keep the button disabled even after error
     });
   };
 
@@ -245,7 +254,7 @@ const ExcelPreview: React.FC<ExcelPreviewProps> = ({ data, fileName, onBack, onS
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={isSubmitting || validationErrors.length > 0}
+          disabled={isSubmitting || validationErrors.length > 0 || hasSubmitted}
           sx={{
             borderRadius: '8px',
             backgroundColor: '#e07a64',
@@ -257,7 +266,7 @@ const ExcelPreview: React.FC<ExcelPreviewProps> = ({ data, fileName, onBack, onS
             }
           }}
         >
-          {isSubmitting ? 'Submitting...' : 'Submit Data'}
+          {isSubmitting ? 'Submitting...' : hasSubmitted ? 'Submitted' : 'Submit Data'}
         </Button>
       </Box>
 

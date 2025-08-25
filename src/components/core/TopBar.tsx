@@ -2,7 +2,6 @@ import React from 'react';
 import Stack from '@mui/material/Stack';
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined';
 import { HiOutlineMenuAlt3 } from 'react-icons/hi';
-import { useAuthContext } from '../../contexts/useAuthContext';
 
 interface TopBarProps {
   title?: string;
@@ -11,8 +10,6 @@ interface TopBarProps {
 }
 
 const TopBar: React.FC<TopBarProps> = ({ title = 'Dashboard', notificationCount = 1, onMenuClick }) => {
-  const { user } = useAuthContext();
-
   return (
     <div className="h-22 flex items-center bg-white px-4 lg:px-0">
       {/* Mobile menu button */}
