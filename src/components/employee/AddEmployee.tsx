@@ -149,7 +149,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ open, onClose, onSave, mode =
         return;
       }
 
-      if (!employeeData.bankDetails.accountName || !employeeData.bankDetails.accountNumber || !employeeData.bankDetails.bankName || !employeeData.bankDetails.branch) {
+      if (!employeeData.bankDetails.accountName || !employeeData.bankDetails.accountNumber || !employeeData.bankDetails.bankName /*|| !employeeData.bankDetails.branch*/) {
         setError('Please fill in all bank details');
         setLoading(false);
         return;
